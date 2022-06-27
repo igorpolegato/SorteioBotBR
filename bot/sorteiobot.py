@@ -81,6 +81,19 @@ def start(bot, mensagem):
         app.send_message(user_id, "Mensagem de inicio")
     registrar(user_id, fname)
 
+@app.on_message(filters.private & filters.command("help"))
+def helpC(bot, mensagem):
+    user_id = mensagem.chat.id
+
+    btns = [
+        [InlineKeyboardButton("Sorteios", callback_data="help_sorteios"),
+        InlineKeyboardButton("Cupons", callback_data="help_cupons")]
+    ]
+
+    markup = InlineKeyboardMarkup(btns)
+
+    app.send_message(user_id, "Esses são meus comandos, clique neles para usa-los!\n\nPara pegar um cupom, veja os sorteios disponiveis", reply_markup=markup)
+
 @app.on_message(filters.private & filters.command("rsorteio"))
 def rSorteio(bot, mensagem):
     user_id = mensagem.chat.id
@@ -112,6 +125,35 @@ def sorteios(bot, mensagem):
         app.send_message(user_id, "Esses são os sorteios disponiveis.\n\nPara retirar um cupom, clique no sorteio que deseja participar!", reply_markup=markup)
     else:
         app.send_message(user_id, "Desculpe, não existe nenhum sorteio ativo no momento")
+
+@app.on_message(filters.private & filters.command("cupons"))
+def consultarCp(bot, mensagem):
+    user_id = mensagem.chat.id
+    todos = bdMap(3, "select * from cupons where user_cod=%s", [user_id])
+    msg = "Esses são os sorteios que você possui cupons: \n\n"
+    cps = {}
+
+    for dado in todos:
+        sorteio = dado[3]
+        cp = dado[4]
+
+        if sorteio not in cps.keys():
+            cps[sorteio] = []
+        
+        if cp not in cps[sorteio]:
+            cps[sorteio].append(cp)
+
+    for k, v in cps.items():
+        msg += f"**{k}**\n"
+
+        for c in v:
+            msg += f"  - {c}\n"
+        
+        msg += "\n"
+
+    app.send_message(user_id, msg)
+
+
 
 
 ############# UTILS #############
@@ -185,6 +227,14 @@ def callSort(bot, call):
     sorteio = str(call.data)[5:]
 
     cupom(nome, user_id, sorteio)
+
+@app.on_callback_query(filters.regex("^help_sorteios"))
+def callSorteios(bot, call):
+    sorteios(bot, call.message)
+
+@app.on_callback_query(filters.regex("^help_cupons"))
+def callCupons(bot, call):
+    consultarCp(bot, call.message)
 
 if __name__ == "__main__":
     bd()
