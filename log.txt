@@ -1,0 +1,172 @@
+[06/26/22 15:47:24.533339] Executando 1, insert into clientes(cod, nome) values (%s, %s), insert, [363030018, 'Igor']
+[06/26/22 15:47:24.534313] Erro: 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '%s, %s)' at line 1
+[06/26/22 15:47:24.534313] Executado 1, insert into clientes(cod, nome) values (%s, %s), insert, [363030018, 'Igor']
+
+[06/26/22 15:47:28.764829] Executando 1, insert into clientes(cod, nome) values (%s, %s), insert, [363030018, 'Igor']
+[06/26/22 15:47:28.765814] Erro: 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '%s, %s)' at line 1
+[06/26/22 15:47:28.765814] Executado 1, insert into clientes(cod, nome) values (%s, %s), insert, [363030018, 'Igor']
+
+[06/26/22 15:48:49.758884] Executando 1, insert into clientes(cod, nome) values(%s, %s), insert, [363030018, 'Igor']
+[06/26/22 15:48:49.758884] Erro: 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '%s, %s)' at line 1
+[06/26/22 15:48:49.759880] Executado 1, insert into clientes(cod, nome) values(%s, %s), insert, [363030018, 'Igor']
+
+[06/26/22 15:49:45.398938] Executando 1, insert into clientes(cod, nome) values(%s, %s), insert, [363030018, 'Igor']
+[06/26/22 15:49:45.399959] Erro: 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '%s, %s)' at line 1
+[06/26/22 15:49:45.400960] Executado 1, insert into clientes(cod, nome) values(%s, %s), insert, [363030018, 'Igor']
+
+[06/26/22 15:52:19.982207] Executando 1, insert into clientes(cod, nome) values(%s, %s), insert, [363030018, 'Igor']
+[06/26/22 15:52:19.983205] Erro: 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '%s, %s)' at line 1
+[06/26/22 15:52:19.983205] Executado 1, insert into clientes(cod, nome) values(%s, %s), insert, [363030018, 'Igor']
+
+[06/26/22 15:53:50.777083] Executando 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+[06/26/22 15:53:50.778098] Executado 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+
+[06/26/22 15:54:02.932300] Executando 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+[06/26/22 15:54:02.933298] Erro: 1062 (23000): Duplicate entry '363030018' for key 'cod'
+[06/26/22 15:54:02.933298] Executado 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+
+[06/26/22 16:03:07.674964] Executando 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+[06/26/22 16:03:07.676960] Erro: 1062 (23000): Duplicate entry '363030018' for key 'cod'
+[06/26/22 16:03:07.683940] Executado 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+
+[06/26/22 16:09:46.768707] Executando 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+[06/26/22 16:09:46.768707] Erro: 1062 (23000): Duplicate entry '363030018' for key 'cod'
+[06/26/22 16:09:46.769728] Executado 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+
+[06/26/22 16:12:18.030953] Executando 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+[06/26/22 16:12:18.030953] Executado 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+
+[06/26/22 16:13:04.745655] Executando 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+[06/26/22 16:13:04.746661] Executado 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+
+[06/26/22 16:13:22.150939] Executando 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+[06/26/22 16:13:22.151937] Executado 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+
+[06/26/22 16:13:41.949443] Executando 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+[06/26/22 16:13:41.949443] Executado 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+
+[06/26/22 16:27:34.894808] Executando 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+[06/26/22 16:27:34.895806] Executado 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+
+[06/26/22 16:28:20.940392] Executando 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+[06/26/22 16:28:20.940392] Erro: 1062 (23000): Duplicate entry '363030018' for key 'cod'
+[06/26/22 16:28:20.941390] Executado 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+
+[06/26/22 16:29:21.886105] Executando 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+[06/26/22 16:29:21.887102] Erro: 1062 (23000): Duplicate entry '363030018' for key 'cod'
+[06/26/22 16:29:21.887102] Executado 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+
+[06/26/22 16:35:51.418876] Executando 2, select * from sorteios, None, select
+[06/26/22 16:35:51.419874] Executado 2, select * from sorteios, None, select
+
+[06/26/22 16:35:53.680573] Executando 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+[06/26/22 16:35:53.681571] Erro: 1062 (23000): Duplicate entry '363030018' for key 'cod'
+[06/26/22 16:35:53.681571] Executado 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+
+[06/26/22 16:35:55.842476] Executando 2, select * from sorteios, None, select
+[06/26/22 16:35:55.843474] Executado 2, select * from sorteios, None, select
+
+[06/26/22 16:36:46.029852] Executando 2, select * from sorteios, None, select
+[06/26/22 16:36:46.030847] Executado 2, select * from sorteios, None, select
+
+[06/26/22 16:44:22.349337] Executando 2, insert into sorteios(nome, max_ptc) values(%s, %s), ['Teste', '2'], insert
+[06/26/22 16:44:22.350310] Executado 2, insert into sorteios(nome, max_ptc) values(%s, %s), ['Teste', '2'], insert
+
+[06/26/22 16:45:20.026624] Executando 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+[06/26/22 16:45:20.027609] Erro: 1062 (23000): Duplicate entry '363030018' for key 'cod'
+[06/26/22 16:45:20.027609] Executado 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
+
+[06/26/22 16:45:27.303472] Executando 2, select * from sorteios, None, select
+[06/26/22 16:45:27.304470] Executado 2, select * from sorteios, None, select
+
+[06/26/22 16:46:10.606504] Executando 2, insert into sorteios(nome, max_ptc) values(%s, %s), ['Teste2', '4'], insert
+[06/26/22 16:46:10.607501] Executado 2, insert into sorteios(nome, max_ptc) values(%s, %s), ['Teste2', '4'], insert
+
+[06/26/22 16:46:14.150582] Executando 2, select * from sorteios, None, select
+[06/26/22 16:46:14.151611] Executado 2, select * from sorteios, None, select
+
+[06/26/22 16:49:49.198891] Executando 2, select * from sorteios, None, select
+[06/26/22 16:49:49.199888] Executado 2, select * from sorteios, None, select
+
+[06/26/22 16:50:12.172077] Executando 2, select * from sorteios, None, select
+[06/26/22 16:50:12.173076] Executado 2, select * from sorteios, None, select
+
+[06/26/22 16:50:33.437351] Executando 2, select * from sorteios, None, select
+[06/26/22 16:50:33.438348] Executado 2, select * from sorteios, None, select
+
+[06/26/22 17:34:33.247393] Executando 2, select * from sorteios where nome=%s, ['este'], select
+[06/26/22 17:34:33.257331] Executado 2, select * from sorteios where nome=%s, ['este'], select
+
+[06/26/22 17:34:38.582370] Executando 2, select * from sorteios where nome=%s, ['este2'], select
+[06/26/22 17:34:38.584342] Executado 2, select * from sorteios where nome=%s, ['este2'], select
+
+[06/26/22 17:34:58.804563] Executando 2, select * from sorteios, None, select
+[06/26/22 17:34:58.806555] Executado 2, select * from sorteios, None, select
+
+[06/26/22 17:35:07.978368] Executando 2, select * from sorteios, None, select
+[06/26/22 17:35:07.979345] Executado 2, select * from sorteios, None, select
+
+[06/26/22 17:35:48.714515] Executando 2, select * from sorteios, None, select
+[06/26/22 17:35:48.716507] Executado 2, select * from sorteios, None, select
+
+[06/26/22 17:36:29.221695] Executando 2, select * from sorteios, None, select
+[06/26/22 17:36:29.222693] Executado 2, select * from sorteios, None, select
+
+[06/26/22 17:37:59.526264] Executando 2, select * from sorteios, None, select
+[06/26/22 17:37:59.527267] Executado 2, select * from sorteios, None, select
+
+[06/26/22 17:38:17.428236] Executando 2, insert into sorteios(nome, max_ptc) values(%s, %s), ['Teste', '10'], insert
+[06/26/22 17:38:17.429234] Executado 2, insert into sorteios(nome, max_ptc) values(%s, %s), ['Teste', '10'], insert
+
+[06/26/22 17:38:19.861714] Executando 2, select * from sorteios, None, select
+[06/26/22 17:38:19.862738] Executado 2, select * from sorteios, None, select
+
+[06/26/22 17:38:21.900663] Executando 2, select * from sorteios where nome=%s, ['este'], select
+[06/26/22 17:38:21.916620] Executado 2, select * from sorteios where nome=%s, ['este'], select
+
+[06/26/22 17:38:25.290803] Executando 2, select * from sorteios where nome=%s, ['este'], select
+[06/26/22 17:38:25.291800] Executado 2, select * from sorteios where nome=%s, ['este'], select
+
+[06/26/22 17:38:56.495344] Executando 2, select * from sorteios where nome=%s, ['Teste'], select
+[06/26/22 17:38:56.496341] Executado 2, select * from sorteios where nome=%s, ['Teste'], select
+
+[06/26/22 17:41:13.849145] Executando 2, insert into sorteios(nome, max_ptc) values(%s, %s), ['Teste', '10'], insert
+[06/26/22 17:41:13.850142] Erro: 1062 (23000): Duplicate entry 'Teste' for key 'nome'
+[06/26/22 17:41:13.851152] Executado 2, insert into sorteios(nome, max_ptc) values(%s, %s), ['Teste', '10'], insert
+
+[06/26/22 22:54:41.140561] Executando 2, select * from sorteios, None, select
+[06/26/22 22:54:41.145546] Executado 2, select * from sorteios, None, select
+
+[06/26/22 22:54:45.196592] Executando 3, select * from cupons where sorteio=%s, ['Teste'], select
+[06/26/22 22:54:45.197590] Executado 3, select * from cupons where sorteio=%s, ['Teste'], select
+
+[06/26/22 22:54:45.198586] Executando 3, insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s), ['Igor', 363030018, 'Teste', 9480], insert
+[06/26/22 22:54:45.198586] Erro: Not all parameters were used in the SQL statement
+[06/26/22 22:54:45.199584] Executado 3, insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s), ['Igor', 363030018, 'Teste', 9480], insert
+
+[06/26/22 22:54:56.449049] Executando 3, select * from cupons where sorteio=%s, ['Teste'], select
+[06/26/22 22:54:56.450023] Executado 3, select * from cupons where sorteio=%s, ['Teste'], select
+
+[06/26/22 22:54:56.451021] Executando 3, insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s), ['Igor', 363030018, 'Teste', 4621], insert
+[06/26/22 22:54:56.451021] Erro: Not all parameters were used in the SQL statement
+[06/26/22 22:54:56.452017] Executado 3, insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s), ['Igor', 363030018, 'Teste', 4621], insert
+
+[06/26/22 22:54:58.225558] Executando 3, select * from cupons where sorteio=%s, ['Teste'], select
+[06/26/22 22:54:58.226556] Executado 3, select * from cupons where sorteio=%s, ['Teste'], select
+
+[06/26/22 22:54:58.227553] Executando 3, insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s), ['Igor', 363030018, 'Teste', 2770], insert
+[06/26/22 22:54:58.227553] Erro: Not all parameters were used in the SQL statement
+[06/26/22 22:54:58.228550] Executado 3, insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s), ['Igor', 363030018, 'Teste', 2770], insert
+
+[06/26/22 22:56:07.628728] Executando 3, select * from cupons where sorteio=%s, ['Teste'], select
+[06/26/22 22:56:07.630722] Executado 3, select * from cupons where sorteio=%s, ['Teste'], select
+
+[06/26/22 22:56:07.631719] Executando 3, insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s, %s), ['Igor', 363030018, 'Teste', 3736], insert
+[06/26/22 22:56:07.633714] Executado 3, insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s, %s), ['Igor', 363030018, 'Teste', 3736], insert
+
+[06/26/22 22:56:27.439296] Executando 3, select * from cupons where sorteio=%s, ['Teste'], select
+[06/26/22 22:56:27.442309] Executado 3, select * from cupons where sorteio=%s, ['Teste'], select
+
+[06/26/22 22:56:27.443285] Executando 3, insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s, %s), ['Igor', 363030018, 'Teste', 3980], insert
+[06/26/22 22:56:27.445308] Executado 3, insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s, %s), ['Igor', 363030018, 'Teste', 3980], insert
+

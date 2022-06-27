@@ -1,0 +1,4 @@
+{
+    "python.envFile": "X:\\Users\\igorp\\Documents\\Projetos\\sorteio_dir\\.env",
+    "python.defaultInterpreterPath": "${workspaceFolder}\\.env\\Scripts\\python.exe"
+}
