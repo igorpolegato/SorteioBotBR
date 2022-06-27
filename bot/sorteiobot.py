@@ -51,7 +51,6 @@ def bd():
         "create table if not exists sorteios ("
         "id int auto_increment primary key,"
         "nome varchar(30) not null,"
-        "max_ptc bigint not null,"
         "unique(nome))"
     )
 
@@ -87,12 +86,11 @@ def rSorteio(bot, mensagem):
     user_id = mensagem.chat.id
     txt = mensagem.text.split()
 
-    if len(txt) < 3:
-        app.send_message(user_id, "Para registrar novo sorteio, envie:\n\n/rsorteio <nome> <participantes-max>", parse_mode=ParseMode.MARKDOWN)
+    if len(txt) < 2:
+        app.send_message(user_id, "Para registrar novo sorteio, envie:\n\n/rsorteio <nome>", parse_mode=ParseMode.MARKDOWN)
     else:
         sort_name = txt[1]
-        sort_ptc = txt[2]
-        r = bdMap(2, "insert into sorteios(nome, max_ptc) values(%s, %s)", [sort_name, sort_ptc], "insert")
+        r = bdMap(2, "insert into sorteios(nome) values(%s)", [sort_name], "insert")
         if r == "duplicate":
             app.send_message(user_id, f"O sorteio {sort_name} já existe!")
         else:
@@ -185,6 +183,7 @@ def callSort(bot, call):
     user_id = call.from_user.id
     nome = call.from_user.first_name
     sorteio = str(call.data)[5:]
+
     cupom(nome, user_id, sorteio)
 
 if __name__ == "__main__":
