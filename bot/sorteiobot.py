@@ -108,7 +108,23 @@ def rSorteio(bot, mensagem):
             app.send_message(user_id, f"O sorteio {sort_name} já existe!")
         else:
             app.send_message(user_id, f"O sorteio {sort_name} foi registrado!")
-            
+
+@app.on_message(filters.private & filters.command("rmsorteio"))
+def rmSorteio(bot, mensagem):
+    user_id = mensagem.chat.id
+    txt = mensagem.text.split()
+
+    if len(txt) != 2 or txt[0] != "/rmsorteio":
+        app.send_message(user_id, "Para apagar um sorteio, envie:\n\n/rmsorteio <nome>", parse_mode=ParseMode.MARKDOWN)
+    
+    else:
+        sort_name = txt[1]
+        bdMap(3, "delete from cupons where sorteio=%s", [sort_name], "delete")
+        bdMap(2, "delete from sorteios where nome=%s", [sort_name], "delete")
+
+        app.send_message(user_id, f"O sorteio {sort_name} foi removido!")
+
+
 
 @app.on_message(filters.private & filters.command("sorteios"))
 def sorteios(bot, mensagem):
@@ -154,6 +170,34 @@ def consultarCp(bot, mensagem):
     app.send_message(user_id, msg)
 
 
+@app.on_message(filters.private & filters.command("enviar"))
+def enviar(bot, mensagem):
+    user_id = mensagem.chat.id
+    media = str(mensagem.media).replace("MessageMediaType.", "").lower()
+    users = [u[1] for u in bdMap(1, "select * from clientes")]
+
+    met = {
+        "text": app.send_message,
+        "video": app.send_video,
+        "photo": app.send_photo
+    }
+
+    if media == "none":
+        text = mensagem.text.replace("/enviar", "")
+
+        for user in users:
+            met['text'](user, text)
+
+    else:
+        text = mensagem.caption.replace("/enviar ", "")
+
+        types = {
+            "video": mensagem.video,
+            "photo": mensagem.photo
+        }
+
+        for user in users:
+            met[media](user, types[media].file_id, text)
 
 
 ############# UTILS #############
@@ -182,7 +226,7 @@ def cupom(nome, user_id, sorteio):
 
 def bdMap(c, sql, var=None,  method="select"): #Interações com banco de dados
     cursors = {
-        1: cur3,
+        1: cur1,
         2: cur2,
         3: cur3
     }

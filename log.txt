@@ -1,4 +1,0 @@
-[06/26/22 23:13:34.698314] Executando 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
-[06/26/22 23:13:34.714271] Erro: 1062 (23000): Duplicate entry '363030018' for key 'cod'
-[06/26/22 23:13:34.715269] Executado 1, insert into clientes(cod, nome) values(%s, %s), [363030018, 'Igor'], insert
-
