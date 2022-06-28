@@ -71,14 +71,16 @@ def bd():
         "create table if not exists indicados ("
         "id int auto_increment primary key,"
         "indicante bigint not null,"
+        "n_indicado varchar(30) not null,"
         "indicado bigint not null,"
         "sorteio varchar(30) not null,"
-        "constraint fk_user_ind foreing key (indicante) references clientes(cod))"
+        "constraint fk_user_ind foreign key (indicante) references clientes(cod),"
+        "constraint fk_sort_ind foreign key (sorteio) references clientes(cod))"
     )
 
 ############## COMANDOS ####################
 
-@app.on_message(filters.private & filters.command("start"))
+@app.on_message(filters.private & filters.command("start")) #Resposta para o comando start, que é enviado quando um usuário inicia o bot
 def start(bot, mensagem):
     m_id = mensagem.id
     user_id = mensagem.chat.id
@@ -90,7 +92,7 @@ def start(bot, mensagem):
         app.send_message(user_id, "Mensagem de inicio")
     registrar(user_id, fname)
 
-@app.on_message(filters.private & filters.command("help"))
+@app.on_message(filters.private & filters.command("help")) #Resposta para o comando help, que consulta a maioria dos comando disponíveis do bot
 def helpC(bot, mensagem):
     user_id = mensagem.chat.id
 
@@ -103,7 +105,7 @@ def helpC(bot, mensagem):
 
     app.send_message(user_id, "Esses são meus comandos, clique neles para usa-los!\n\nPara pegar um cupom, veja os sorteios disponiveis", reply_markup=markup)
 
-@app.on_message(filters.private & filters.command("rsorteio"))
+@app.on_message(filters.private & filters.command("rsorteio")) #Respota para o comando rsorteio, que registra um novo sorteio
 def rSorteio(bot, mensagem):
     user_id = mensagem.chat.id
     txt = mensagem.text.split()
@@ -118,7 +120,7 @@ def rSorteio(bot, mensagem):
         else:
             app.send_message(user_id, f"O sorteio {sort_name} foi registrado!")
 
-@app.on_message(filters.private & filters.command("rmsorteio"))
+@app.on_message(filters.private & filters.command("rmsorteio")) #Resposta para o comando rmsorteio, que deleta um sorteio da lista
 def rmSorteio(bot, mensagem):
     user_id = mensagem.chat.id
     txt = mensagem.text.split()
@@ -133,9 +135,7 @@ def rmSorteio(bot, mensagem):
 
         app.send_message(user_id, f"O sorteio {sort_name} foi removido!")
 
-
-
-@app.on_message(filters.private & filters.command("sorteios"))
+@app.on_message(filters.private & filters.command("sorteios")) #Resposta para o comando sorteios, que consulta todos os sorteios disponíveis
 def sorteios(bot, mensagem):
     sorts = bdMap(2, "select * from sorteios")
     user_id = mensagem.chat.id
@@ -151,7 +151,7 @@ def sorteios(bot, mensagem):
     else:
         app.send_message(user_id, "Desculpe, não existe nenhum sorteio ativo no momento")
 
-@app.on_message(filters.private & filters.command("cupons"))
+@app.on_message(filters.private & filters.command("cupons")) #Resposta para o comando cupons, que consulta todos os cupons de todos os sorteios que o usuário participa
 def consultarCp(bot, mensagem):
     user_id = mensagem.chat.id
     todos = bdMap(3, "select * from cupons where user_cod=%s", [user_id])
@@ -178,12 +178,37 @@ def consultarCp(bot, mensagem):
 
     app.send_message(user_id, msg)
 
+@app.on_message(filters.private & filters.command("indica")) #Resposta para o comando indica, que registra uma indicação e gera um novo cupom
+def indica(bot, mensagem):
+    user_id = mensagem.chat.id
+    fname = mensagem.chat.first_name
+    text = mensagem.text.split()
 
-@app.on_message(filters.private & filters.command("enviar"))
+    try:
+        indicante = int(text[1])
+    except Exception:
+        indicante = False
+
+    if len(text) != 3 or text[0] != "/indica" or not indicante:
+        app.send_message(user_id, "Para registrar um indicante, digite:\n\n /indica <código> <sorteio>", parse_mode=ParseMode.MARKDOWN)
+
+    elif indicante == user_id:
+        app.send_message(user_id, "Você não pode usar seu própio código!")
+
+    else:
+        sorteio = text[2]
+        try:
+            nome = bdMap(1, "select * from clientes where cod=%s", [indicante])[0][1]
+            cupom(nome, indicante, sorteio, fname=fname, lib=True, ind=True)
+        except Exception:
+            app.send_message(user_id, "Código invalido!")
+
+@app.on_message(filters.private & filters.command("enviar")) #Resposta para o comando enviar, que envia a mensagem para todos os usuários cadastrados
 def enviar(bot, mensagem):
-    #user_id = mensagem.chat.id
+    user_id = mensagem.chat.id
     media = str(mensagem.media).replace("MessageMediaType.", "").lower()
     users = [u[1] for u in bdMap(1, "select * from clientes")]
+    users.remove(user_id)
 
     met = {
         "text": app.send_message,
@@ -211,33 +236,36 @@ def enviar(bot, mensagem):
 
 ############# UTILS #############
 
-def registrar(user_id, fname):
+def registrar(user_id, fname): #Registrar novo usuário
     try:
         r = bdMap(1, "insert into clientes(cod, nome) values(%s, %s)", [user_id, fname], "insert")
         if r == "duplicate":
-            app.send_message(user_id, "Usuario já cadastrado!")
+            app.send_message(user_id, "Usuário já cadastrado!")
         else:
-            app.send_message(user_id, "Usuario cadastrado!")
+            app.send_message(user_id, "Usuário cadastrado!")
     except Exception as errorrg:
         print(errorrg)
 
-def cupom(nome, user_id, sorteio):
+def cupom(nome, user_id, sorteio, fname=None, lib=False, ind=False): #Gerar e registrar cupons de sorteio
     cupons = [x[4] for x in bdMap(3, "select * from cupons where sorteio=%s", [sorteio])]
     num = rd(1, 10000)
 
     while num in cupons:
         num = rd(1, 10000)
 
-    bdMap(3, "insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s, %s)", [nome, user_id, sorteio, num], "insert")
+    if ind:
+        msg = f"Você recebeu um cupom para o sorteio {sorteio} por indicar {fname}!\n\nSeu cupom é {num}"
+    else:
+        msg = f"Seu cupom é {num} para o sorteio {sorteio}"
 
-    print(participa(nome, user_id, sorteio))
-    if not participa(nome, user_id, sorteio):
-        app.send_message(user_id, f"Seu cupom é {num} para o sorteio {sorteio}")
+    if not participa(nome, user_id, sorteio) or lib:
+        bdMap(3, "insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s, %s)", [nome, user_id, sorteio, num], "insert")
+        app.send_message(user_id, msg)
 
     else:
         app.send_message(user_id, f"Você já possui cupom(ns) desse sorteio.\n\nPara receber mais, indique para amigos! Você pode indicar para até 10 amigos\n\nSeu código de indicação:\n**{user_id}**")
 
-def participa(nome, user_id, sorteio):
+def participa(nome, user_id, sorteio): #Verificar se um usuário já particia de um sorteio
     pt = [p[-1] for p in bdMap(3, "select * from cupons where user_cod=%s and sorteio=%s", [user_id, sorteio])]
 
     if len(pt) == 0:
@@ -287,7 +315,7 @@ def log(texto):
 
 ############### CALLBACKS ##############
 
-@app.on_callback_query(filters.regex("^sort\S"))
+@app.on_callback_query(filters.regex("^sort\S")) #Resposta para botão de registrar sorteio
 def callSort(bot, call):
     user_id = call.from_user.id
     nome = call.from_user.first_name
@@ -295,11 +323,11 @@ def callSort(bot, call):
 
     cupom(nome, user_id, sorteio)
 
-@app.on_callback_query(filters.regex("^help_sorteios"))
+@app.on_callback_query(filters.regex("^help_sorteios")) #Resposta para botão sorteios do help
 def callSorteios(bot, call):
     sorteios(bot, call.message)
 
-@app.on_callback_query(filters.regex("^help_cupons"))
+@app.on_callback_query(filters.regex("^help_cupons")) #Resposta para botão cupons do help
 def callCupons(bot, call):
     consultarCp(bot, call.message)
 
