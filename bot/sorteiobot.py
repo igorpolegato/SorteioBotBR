@@ -181,6 +181,7 @@ def consultarCp(bot, mensagem):
 @app.on_message(filters.private & filters.command("indica"))
 def indica(bot, mensagem):
     user_id = mensagem.chat.id
+    fname = mensagem.chat.first_name
     text = mensagem.text.split()
 
     try:
@@ -195,8 +196,12 @@ def indica(bot, mensagem):
         app.send_message(user_id, "Você não pode usar seu própio código!")
 
     else:
-        nome = bdMap(1, "select * from clientes where cod=%s", [indicante])[0]
-        cupom(nome, indicante, text[2])
+        sorteio = text[2]
+        try:
+            nome = bdMap(1, "select * from clientes where cod=%s", [indicante])[0][1]
+            cupom(nome, indicante, sorteio, fname=fname, lib=True, ind=True)
+        except Exception:
+            app.send_message(user_id, "Código invalido!")
 
 @app.on_message(filters.private & filters.command("enviar"))
 def enviar(bot, mensagem):
@@ -241,17 +246,21 @@ def registrar(user_id, fname):
     except Exception as errorrg:
         print(errorrg)
 
-def cupom(nome, user_id, sorteio):
+def cupom(nome, user_id, sorteio, fname=None, lib=False, ind=False):
     cupons = [x[4] for x in bdMap(3, "select * from cupons where sorteio=%s", [sorteio])]
     num = rd(1, 10000)
 
     while num in cupons:
         num = rd(1, 10000)
 
-    bdMap(3, "insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s, %s)", [nome, user_id, sorteio, num], "insert")
+    if ind:
+        msg = f"Você recebeu um cupom para o sorteio {sorteio} por indicar {fname}!\n\nSeu cupom é {num}"
+    else:
+        msg = f"Seu cupom é {num} para o sorteio {sorteio}"
 
-    if not participa(nome, user_id, sorteio):
-        app.send_message(user_id, f"Seu cupom é {num} para o sorteio {sorteio}")
+    if not participa(nome, user_id, sorteio) or lib:
+        bdMap(3, "insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s, %s)", [nome, user_id, sorteio, num], "insert")
+        app.send_message(user_id, msg)
 
     else:
         app.send_message(user_id, f"Você já possui cupom(ns) desse sorteio.\n\nPara receber mais, indique para amigos! Você pode indicar para até 10 amigos\n\nSeu código de indicação:\n**{user_id}**")
