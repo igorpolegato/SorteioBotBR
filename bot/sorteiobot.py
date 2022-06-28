@@ -24,7 +24,7 @@ lock = threading.Lock()
 
 ################## MySQL #################
 def bd():
-    global con, cur1, cur2, cur3
+    global con, cur1, cur2, cur3, cur4
 
     con = mysql.connector.connect(
         host=dbhost,
@@ -37,6 +37,7 @@ def bd():
     cur1 = con.cursor(buffered=True) # cursor para tabela clientes
     cur2 = con.cursor(buffered=True) # cursor para tabela sorteios
     cur3 = con.cursor(buffered=True) # cursor para a tabela codigos
+    cur4 = con.cursor(buffered=True) # cursor para a tabela indicados
 
     cur.execute(
         "create table if not exists clientes ("
@@ -66,6 +67,14 @@ def bd():
         "constraint fk_sorteio foreign key (sorteio) references sorteios(nome))"
     )
     
+    cur.execute(
+        "create table if not exists indicados ("
+        "id int auto_increment primary key,"
+        "indicante bigint not null,"
+        "indicado bigint not null,"
+        "sorteio varchar(30) not null,"
+        "constraint fk_user_ind foreing key (indicante) references clientes(cod))"
+    )
 
 ############## COMANDOS ####################
 
@@ -172,7 +181,7 @@ def consultarCp(bot, mensagem):
 
 @app.on_message(filters.private & filters.command("enviar"))
 def enviar(bot, mensagem):
-    user_id = mensagem.chat.id
+    #user_id = mensagem.chat.id
     media = str(mensagem.media).replace("MessageMediaType.", "").lower()
     users = [u[1] for u in bdMap(1, "select * from clientes")]
 
@@ -221,14 +230,28 @@ def cupom(nome, user_id, sorteio):
 
     bdMap(3, "insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s, %s)", [nome, user_id, sorteio, num], "insert")
 
-    app.send_message(user_id, f"Seu cupom é {num} para o sorteio {sorteio}")
+    print(participa(nome, user_id, sorteio))
+    if not participa(nome, user_id, sorteio):
+        app.send_message(user_id, f"Seu cupom é {num} para o sorteio {sorteio}")
 
+    else:
+        app.send_message(user_id, f"Você já possui cupom(ns) desse sorteio.\n\nPara receber mais, indique para amigos! Você pode indicar para até 10 amigos\n\nSeu código de indicação:\n**{user_id}**")
+
+def participa(nome, user_id, sorteio):
+    pt = [p[-1] for p in bdMap(3, "select * from cupons where user_cod=%s and sorteio=%s", [user_id, sorteio])]
+
+    if len(pt) == 0:
+        return False
+
+    else:
+        return True
 
 def bdMap(c, sql, var=None,  method="select"): #Interações com banco de dados
     cursors = {
         1: cur1,
         2: cur2,
-        3: cur3
+        3: cur3,
+        4: cur4
     }
 
     lock.acquire(True)
