@@ -71,9 +71,11 @@ def bd():
         "create table if not exists indicados ("
         "id int auto_increment primary key,"
         "indicante bigint not null,"
+        "n_indicado varchar(30) not null,"
         "indicado bigint not null,"
         "sorteio varchar(30) not null,"
-        "constraint fk_user_ind foreing key (indicante) references clientes(cod))"
+        "constraint fk_user_ind foreign key (indicante) references clientes(cod),"
+        "constraint fk_sort_ind foreign key (sorteio) references clientes(cod))"
     )
 
 ############## COMANDOS ####################
@@ -133,8 +135,6 @@ def rmSorteio(bot, mensagem):
 
         app.send_message(user_id, f"O sorteio {sort_name} foi removido!")
 
-
-
 @app.on_message(filters.private & filters.command("sorteios"))
 def sorteios(bot, mensagem):
     sorts = bdMap(2, "select * from sorteios")
@@ -178,12 +178,32 @@ def consultarCp(bot, mensagem):
 
     app.send_message(user_id, msg)
 
+@app.on_message(filters.private & filters.command("indica"))
+def indica(bot, mensagem):
+    user_id = mensagem.chat.id
+    text = mensagem.text.split()
+
+    try:
+        indicante = int(text[1])
+    except Exception:
+        indicante = False
+
+    if len(text) != 3 or text[0] != "/indica" or not indicante:
+        app.send_message(user_id, "Para registrar um indicante, digite:\n\n /indica <código> <sorteio>", parse_mode=ParseMode.MARKDOWN)
+
+    elif indicante == user_id:
+        app.send_message(user_id, "Você não pode usar seu própio código!")
+
+    else:
+        nome = bdMap(1, "select * from clientes where cod=%s", [indicante])[0]
+        cupom(nome, indicante, text[2])
 
 @app.on_message(filters.private & filters.command("enviar"))
 def enviar(bot, mensagem):
-    #user_id = mensagem.chat.id
+    user_id = mensagem.chat.id
     media = str(mensagem.media).replace("MessageMediaType.", "").lower()
     users = [u[1] for u in bdMap(1, "select * from clientes")]
+    users.remove(user_id)
 
     met = {
         "text": app.send_message,
@@ -230,7 +250,6 @@ def cupom(nome, user_id, sorteio):
 
     bdMap(3, "insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s, %s)", [nome, user_id, sorteio, num], "insert")
 
-    print(participa(nome, user_id, sorteio))
     if not participa(nome, user_id, sorteio):
         app.send_message(user_id, f"Seu cupom é {num} para o sorteio {sorteio}")
 
