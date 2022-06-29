@@ -166,7 +166,8 @@ disable=raw-checker-failed,
         wildcard-import,
         unused-argument,
         global-variable-undefined,
-        anomalous-backslash-in-string
+        anomalous-backslash-in-string,
+        consider-iterating-dictionary
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
