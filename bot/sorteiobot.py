@@ -97,6 +97,7 @@ def helpC(bot, mensagem):
     btns = [
         [InlineKeyboardButton("Sorteios", callback_data="help_sorteios"), InlineKeyboardButton("Cupons", callback_data="help_cupons")],
         [InlineKeyboardButton("Registrar Sorteio", callback_data="help_regsorteio"), InlineKeyboardButton("Apagar sorteio", callback_data="help_rmsorteio")],
+        [InlineKeyboardButton("Sortear", callback_data="help_sortear")],
         [InlineKeyboardButton("Indicação", callback_data="help_ind")]
 
     ]
@@ -414,12 +415,16 @@ def callSort(bot, call):
 
     cupom(nome, user_id, sorteio)
 
-@app.on_callback_query(filters.regex("^win\S")) #resposta para o botão sortear do help
+@app.on_callback_query(filters.regex("^win\S")) #Resposta para escolher vencedor do sorteio
 def callWin(bot, call):
     sorteio = call.data[4:]
     user_id = call.from_user.id
     
     ganhador(user_id, sorteio)
+
+@app.on_callback_query(filters.regex("^help_sortear")) #Resposta para botão sortear do help
+def callSotear(bot, call):
+    escSortear(bot, call.menssage)
 
 @app.on_callback_query(filters.regex("^help_sorteios")) #Resposta para botão sorteios do help
 def callSorteios(bot, call):
