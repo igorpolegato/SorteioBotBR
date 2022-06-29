@@ -235,7 +235,7 @@ def indica(bot, mensagem):
         else:
             app.send_message(user_id, "Você já utilizou esse código!")
 
-@app.on_message(filters.command("sortear"))
+@app.on_message(filters.command("sortear")) #Opções para o sorteio
 def escSortear(bot, mensagem):
     user_id = mensagem.chat.id
     st = [[InlineKeyboardButton(str(s[1]), callback_data="win_"+str(s[1]))] for s in bdMap(2, "select * from sorteios where criador=%s", [user_id])]
@@ -317,7 +317,7 @@ def cupom(nome, user_id, sorteio, fname=None, lib=False, ind=False, indicado=Non
             app.send_message(user_id, f"Você já possui cupom(ns) desse sorteio.\n\nPara receber mais, indique para amigos! Você pode indicar para até 10 amigos\n\nSeu código de indicação:\n```{user_id}```")
             app.send_message(user_id, f"Envie para seu amigo\n\nEstá rolando sorteio no @gsorteiobot!\n\nFaça o seu cadastro e digite meu código de indicação\n\nDigite ```/indica {user_id}``` para participar!")    
 
-def ganhador(dono, sorteio):
+def ganhador(dono, sorteio): #Define o vencedor do sorteio
     parts = {}
     todos = bdMap(3, "select * from cupons where sorteio=%s", [sorteio])
     nums = [n[4] for n in bdMap(3, "select * from cupons where sorteio=%s", [sorteio])]
