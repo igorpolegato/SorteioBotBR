@@ -97,8 +97,10 @@ def helpC(bot, mensagem):
     user_id = mensagem.chat.id
 
     btns = [
-        [InlineKeyboardButton("Sorteios", callback_data="help_sorteios"),
-        InlineKeyboardButton("Cupons", callback_data="help_cupons")]
+        [InlineKeyboardButton("Sorteios", callback_data="help_sorteios"), InlineKeyboardButton("Cupons", callback_data="help_cupons")],
+        [InlineKeyboardButton("Registrar Sorteio", callback_data="help_regsorteio"), InlineKeyboardButton("Apagar sorteio", callback_data="help_rmsorteio")],
+        [InlineKeyboardButton("Indicação", callback_data="help_ind")]
+
     ]
 
     markup = InlineKeyboardMarkup(btns)
@@ -110,7 +112,7 @@ def rSorteio(bot, mensagem):
     user_id = mensagem.chat.id
     txt = mensagem.text.split()
 
-    if len(txt) < 2:
+    if len(txt) != 2:
         app.send_message(user_id, "Para registrar novo sorteio, envie:\n\n/rsorteio <nome>", parse_mode=ParseMode.MARKDOWN)
     else:
         sort_name = txt[1].lower()
@@ -292,9 +294,6 @@ def participa(nome, user_id, sorteio): #Verificar se um usuário já particia de
 def limite(indicante, sorteio):
     ind = bdMap(4, "select * from indicados where indicante=%s and sorteio=%s", [indicante, sorteio])
 
-    #print(ind)
-    #print(len(ind))
-
     if len(ind) < 10:
         return False
     
@@ -303,9 +302,6 @@ def limite(indicante, sorteio):
 
 def indExists(indicante, indicado, sorteio):
     ind = bdMap(4, "select * from indicados where indicante=%s and indicado=%s and sorteio=%s", [indicante, indicado, sorteio])
-
-    print(ind)
-
 
     if len(ind) > 0:
         return True
@@ -369,6 +365,18 @@ def callSorteios(bot, call):
 @app.on_callback_query(filters.regex("^help_cupons")) #Resposta para botão cupons do help
 def callCupons(bot, call):
     consultarCp(bot, call.message)
+
+@app.on_callback_query(filters.regex("^help_regsorteio")) #Resposta para botão Registrar Sorteio do help
+def callRegSort(bot, call):
+    rSorteio(bot, call.message)
+    
+@app.on_callback_query(filters.regex("^help_rmsorteio")) #Resposta para botão Remover Sorteio do help
+def callRmSort(bot, call):
+    rmSorteio(bot, call.message)
+
+@app.on_callback_query(filters.regex("^help_ind")) #Resposta para botão Indicação do help
+def callInd(bot, call):
+    indica(bot, call.message)
 
 if __name__ == "__main__":
     bd()
