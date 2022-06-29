@@ -6,7 +6,7 @@ from data import *
 
 from datetime import datetime
 from traceback import print_exc
-from random import randrange as rd
+from random import randrange as rd, choice
 
 import mysql.connector
 import threading
@@ -238,7 +238,7 @@ def indica(bot, mensagem):
 @app.on_message(filters.command("sortear"))
 def escSortear(bot, mensagem):
     user_id = mensagem.chat.id
-    st = [[InlineKeyboardButton(str(s[1]), callback_data="sortear_"+str(s[1]))] for s in bdMap(2, "select * from sorteios where criador=%s", [user_id])]
+    st = [[InlineKeyboardButton(str(s[1]), callback_data="win_"+str(s[1]))] for s in bdMap(2, "select * from sorteios where criador=%s", [user_id])]
 
     markup = InlineKeyboardMarkup(st)
 
@@ -277,7 +277,9 @@ def enviar(bot, mensagem):
             met[media](user, types[media].file_id, text)
             print(f"Mensagem encaminhada para {user}\n")
 
-
+@app.on_message(filters.command("teste"))
+def teste(bot, mensagem):
+    ganhador(363030018, "Testebot")
 ############# UTILS #############
 
 def registrar(user_id, fname): #Registrar novo usuário
@@ -314,6 +316,27 @@ def cupom(nome, user_id, sorteio, fname=None, lib=False, ind=False, indicado=Non
         else:
             app.send_message(user_id, f"Você já possui cupom(ns) desse sorteio.\n\nPara receber mais, indique para amigos! Você pode indicar para até 10 amigos\n\nSeu código de indicação:\n```{user_id}```")
             app.send_message(user_id, f"Envie para seu amigo\n\nEstá rolando sorteio no @gsorteiobot!\n\nFaça o seu cadastro e digite meu código de indicação\n\nDigite ```/indica {user_id}``` para participar!")    
+
+def ganhador(dono, sorteio):
+    parts = {}
+    todos = bdMap(3, "select * from cupons where sorteio=%s", [sorteio])
+    nums = [n[4] for n in bdMap(3, "select * from cupons where sorteio=%s", [sorteio])]
+    win = choice(nums)
+
+    for part in todos:
+        cp_id, nome, user_id, sort, cp = part
+
+        if nome not in parts.keys():
+            parts[nome] = {"uid": user_id, "cps": []}
+        
+        if cp not in parts[nome]["cps"]:
+            parts[nome]["cps"].append(cp)
+
+    for k, v in parts.items():
+        if win in v["cps"]:
+            username = app.get_chat(v["uid"]).username
+            app.send_message(user_id, f"O vencedor do sorteio é @{username} com o cupom {win}")
+            break
 
 def participa(nome, user_id, sorteio): #Verificar se um usuário já particia de um sorteio
     pt = [p[-1] for p in bdMap(3, "select * from cupons where user_cod=%s and sorteio=%s", [user_id, sorteio])]
@@ -390,6 +413,13 @@ def callSort(bot, call):
     sorteio = str(call.data)[5:]
 
     cupom(nome, user_id, sorteio)
+
+@app.on_callback_query(filters.regex("^win\S")) #resposta para o botão sortear do help
+def callWin(bot, call):
+    sorteio = call.data[4:]
+    user_id = call.from_user.id
+    
+    ganhador(user_id, sorteio)
 
 @app.on_callback_query(filters.regex("^help_sorteios")) #Resposta para botão sorteios do help
 def callSorteios(bot, call):
