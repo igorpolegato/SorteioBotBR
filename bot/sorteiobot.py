@@ -87,13 +87,14 @@ def start(bot, mensagem):
     user_id = mensagem.chat.id
     fname = str(mensagem.chat.first_name)
 
+    registrar(user_id, fname)
     helpC(bot, mensagem)
     sorteios(bot, mensagem)
-    registrar(user_id, fname)
 
 @app.on_message(filters.private & filters.command("help")) #Resposta para o comando help, que consulta a maioria dos comando disponíveis do bot
 def helpC(bot, mensagem):
     user_id = mensagem.chat.id
+    fname = mensagem.chat.first_name
 
     btns = [
         [InlineKeyboardButton("Sorteios", callback_data="help_sorteios"), InlineKeyboardButton("Cupons", callback_data="help_cupons")],
@@ -105,10 +106,12 @@ def helpC(bot, mensagem):
     markup = InlineKeyboardMarkup(btns)
 
     app.send_message(user_id, "Esses são meus comandos, clique neles para usa-los!\n\nPara pegar um cupom, veja os sorteios disponiveis", reply_markup=markup)
+    print(f"O usuário {fname}({user_id}) consultou os comandos --> /help\n")
 
 @app.on_message(filters.private & filters.command("rsorteio")) #Respota para o comando rsorteio, que registra um novo sorteio
 def rSorteio(bot, mensagem):
     user_id = mensagem.chat.id
+    fname = mensagem.chat.first_name
     txt = mensagem.text.split()
 
     if len(txt) != 2:
@@ -119,12 +122,15 @@ def rSorteio(bot, mensagem):
         r = bdMap(2, "insert into sorteios(nome, criador) values(%s, %s)", [sort_name, user_id], "insert")
         if r == "duplicate":
             app.send_message(user_id, f"O sorteio {sort_name} já existe!")
+            print(f"O usuário {fname}({user_id}) registrou o sorteio {sort_name} --> /rSorteio\n")
         else:
             app.send_message(user_id, f"O sorteio {sort_name} foi registrado!")
+
 
 @app.on_message(filters.private & filters.command("rmsorteio")) #Resposta para o comando rmsorteio, que deleta um sorteio da lista
 def rmSorteio(bot, mensagem):
     user_id = mensagem.chat.id
+    fname = mensagem.chat.first_name
     txt = mensagem.text.split()
 
     if len(txt) != 2 or txt[0] != "/rmsorteio":
@@ -140,6 +146,8 @@ def rmSorteio(bot, mensagem):
             bdMap(4, "delete from indicados where sorteio=%s", [sort_name], "delete")
 
             app.send_message(user_id, f"O sorteio {sort_name} foi removido!")
+
+            print(f"O usuário {fname}({user_id}) removeu o sorteio {sort_name} --> /rmSorteio\n")
         
         else:
             app.send_message(user_id, "Você não tem permissão para excluir esse sorteio!")
@@ -148,6 +156,7 @@ def rmSorteio(bot, mensagem):
 def sorteios(bot, mensagem):
     sorts = bdMap(2, "select * from sorteios")
     user_id = mensagem.chat.id
+    fname = mensagem.chat.first_name
     btns = []
 
     if len(sorts) > 0:
@@ -160,9 +169,12 @@ def sorteios(bot, mensagem):
     else:
         app.send_message(user_id, "Desculpe, não existe nenhum sorteio ativo no momento")
 
+    print(f"O usuário {fname}({user_id}) consultou os sorteios --> /sorteios\n")
+
 @app.on_message(filters.private & filters.command("cupons")) #Resposta para o comando cupons, que consulta todos os cupons de todos os sorteios que o usuário participa
 def consultarCp(bot, mensagem):
     user_id = mensagem.chat.id
+    fname = mensagem.chat.first_name
     todos = bdMap(3, "select * from cupons where user_cod=%s", [user_id])
     msg = "Esses são os sorteios que você possui cupons: \n\n"
     cps = {}
@@ -186,6 +198,8 @@ def consultarCp(bot, mensagem):
         msg += "\n"
 
     app.send_message(user_id, msg)
+
+    print("O usuário {fname}({user_id}) consultou os cupons --> /cupons\n")
 
 @app.on_message(filters.private & filters.command("indica")) #Resposta para o comando indica, que registra uma indicação e gera um novo cupom
 def indica(bot, mensagem):
@@ -214,6 +228,8 @@ def indica(bot, mensagem):
                 cupom(nome, indicante, sorteio, fname=fname, lib=True, ind=True, indicado=user_id)
 
                 app.send_message(user_id, "Obrigado por aceitar a recomendação!")
+
+                print(f"O usuário {fname} registrou {indicante} como indicante do sorteio {sorteio} --> /indica\n")
 
             except Exception:
                 app.send_message(user_id, "Código invalido!")
@@ -263,6 +279,8 @@ def registrar(user_id, fname): #Registrar novo usuário
             app.send_message(user_id, "Usuário cadastrado!")
     except Exception as errorrg:
         print(errorrg)
+
+    print(f"O usuário {fname}({user_id}) foi registrado\n")
 
 def cupom(nome, user_id, sorteio, fname=None, lib=False, ind=False, indicado=None): #Gerar e registrar cupons de sorteio
     cupons = [x[4] for x in bdMap(3, "select * from cupons where sorteio=%s", [sorteio])]
@@ -385,4 +403,7 @@ def callInd(bot, call):
 
 if __name__ == "__main__":
     bd()
+    print("+----------------+\n"
+          "|  BOT INICIADO  |\n"
+          "+----------------+\n")
     app.run()
