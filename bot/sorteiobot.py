@@ -52,6 +52,7 @@ def bd():
         "create table if not exists sorteios ("
         "id int auto_increment primary key,"
         "nome varchar(30) not null,"
+        "criador bigint not null,"
         "unique(nome))"
     )
 
@@ -86,12 +87,9 @@ def start(bot, mensagem):
     user_id = mensagem.chat.id
     fname = str(mensagem.chat.first_name)
 
-    if m_id == 1:
-        app.send_message(user_id, "Mensagem que inicio para primeira interação")
-    else:
-        app.send_message(user_id, "Mensagem de inicio")
-    registrar(user_id, fname)
     helpC(bot, mensagem)
+    sorteios(bot, mensagem)
+    registrar(user_id, fname)
 
 @app.on_message(filters.private & filters.command("help")) #Resposta para o comando help, que consulta a maioria dos comando disponíveis do bot
 def helpC(bot, mensagem):
@@ -118,7 +116,7 @@ def rSorteio(bot, mensagem):
     else:
         sort_name = txt[1].lower()
         sort_name = sort_name.title()
-        r = bdMap(2, "insert into sorteios(nome) values(%s)", [sort_name], "insert")
+        r = bdMap(2, "insert into sorteios(nome, criador) values(%s, %s)", [sort_name, user_id], "insert")
         if r == "duplicate":
             app.send_message(user_id, f"O sorteio {sort_name} já existe!")
         else:
@@ -135,11 +133,16 @@ def rmSorteio(bot, mensagem):
     else:
         sort_name = txt[1].lower()
         sort_name = sort_name.title()
-        bdMap(3, "delete from cupons where sorteio=%s", [sort_name], "delete")
-        bdMap(2, "delete from sorteios where nome=%s", [sort_name], "delete")
-        bdMap(4, "delete from indicados where sorteio=%s", [sort_name], "delete")
+        criador = bdMap(2, "select * from sorteios where nome=%s", [sort_name])[0][2]
+        if criador == user_id:
+            bdMap(3, "delete from cupons where sorteio=%s", [sort_name], "delete")
+            bdMap(2, "delete from sorteios where nome=%s", [sort_name], "delete")
+            bdMap(4, "delete from indicados where sorteio=%s", [sort_name], "delete")
 
-        app.send_message(user_id, f"O sorteio {sort_name} foi removido!")
+            app.send_message(user_id, f"O sorteio {sort_name} foi removido!")
+        
+        else:
+            app.send_message(user_id, "Você não tem permissão para excluir esse sorteio!")
 
 @app.on_message(filters.private & filters.command("sorteios")) #Resposta para o comando sorteios, que consulta todos os sorteios disponíveis
 def sorteios(bot, mensagem):
