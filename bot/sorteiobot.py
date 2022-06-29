@@ -113,7 +113,8 @@ def rSorteio(bot, mensagem):
     if len(txt) < 2:
         app.send_message(user_id, "Para registrar novo sorteio, envie:\n\n/rsorteio <nome>", parse_mode=ParseMode.MARKDOWN)
     else:
-        sort_name = txt[1]
+        sort_name = txt[1].lower()
+        sort_name = sort_name.title()
         r = bdMap(2, "insert into sorteios(nome) values(%s)", [sort_name], "insert")
         if r == "duplicate":
             app.send_message(user_id, f"O sorteio {sort_name} já existe!")
@@ -129,9 +130,11 @@ def rmSorteio(bot, mensagem):
         app.send_message(user_id, "Para apagar um sorteio, envie:\n\n/rmsorteio <nome>", parse_mode=ParseMode.MARKDOWN)
     
     else:
-        sort_name = txt[1]
+        sort_name = txt[1].lower()
+        sort_name = sort_name.title()
         bdMap(3, "delete from cupons where sorteio=%s", [sort_name], "delete")
         bdMap(2, "delete from sorteios where nome=%s", [sort_name], "delete")
+        bdMap(4, "delete from indicados where sorteio=%s", [sort_name], "delete")
 
         app.send_message(user_id, f"O sorteio {sort_name} foi removido!")
 
@@ -197,11 +200,20 @@ def indica(bot, mensagem):
 
     else:
         sorteio = text[2]
-        try:
-            nome = bdMap(1, "select * from clientes where cod=%s", [indicante])[0][1]
-            cupom(nome, indicante, sorteio, fname=fname, lib=True, ind=True)
-        except Exception:
-            app.send_message(user_id, "Código invalido!")
+        if not indExists(indicante, user_id, sorteio):
+            try:
+                nome = bdMap(1, "select * from clientes where cod=%s", [indicante])[0][1]
+
+                bdMap(4, "insert into indicados(indicante, n_indicado, indicado, sorteio) values(%s, %s, %s, %s)", [indicante, fname, user_id, sorteio])
+                cupom(nome, indicante, sorteio, fname=fname, lib=True, ind=True, indicado=user_id)
+
+                app.send_message(user_id, "Obrigado por aceitar a recomendação!")
+
+            except Exception:
+                app.send_message(user_id, "Código invalido!")
+        
+        else:
+            app.send_message(user_id, "Você já utilizou esse código!")
 
 @app.on_message(filters.private & filters.command("enviar")) #Resposta para o comando enviar, que envia a mensagem para todos os usuários cadastrados
 def enviar(bot, mensagem):
@@ -246,7 +258,7 @@ def registrar(user_id, fname): #Registrar novo usuário
     except Exception as errorrg:
         print(errorrg)
 
-def cupom(nome, user_id, sorteio, fname=None, lib=False, ind=False): #Gerar e registrar cupons de sorteio
+def cupom(nome, user_id, sorteio, fname=None, lib=False, ind=False, indicado=None): #Gerar e registrar cupons de sorteio
     cupons = [x[4] for x in bdMap(3, "select * from cupons where sorteio=%s", [sorteio])]
     num = rd(1, 10000)
 
@@ -255,15 +267,18 @@ def cupom(nome, user_id, sorteio, fname=None, lib=False, ind=False): #Gerar e re
 
     if ind:
         msg = f"Você recebeu um cupom para o sorteio {sorteio} por indicar {fname}!\n\nSeu cupom é {num}"
+
     else:
         msg = f"Seu cupom é {num} para o sorteio {sorteio}"
 
-    if not participa(nome, user_id, sorteio) or lib:
-        bdMap(3, "insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s, %s)", [nome, user_id, sorteio, num], "insert")
-        app.send_message(user_id, msg)
+    if not limite(user_id, sorteio):
 
-    else:
-        app.send_message(user_id, f"Você já possui cupom(ns) desse sorteio.\n\nPara receber mais, indique para amigos! Você pode indicar para até 10 amigos\n\nSeu código de indicação:\n**{user_id}**")
+        if not participa(nome, user_id, sorteio) or lib:
+            bdMap(3, "insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s, %s)", [nome, user_id, sorteio, num], "insert")
+            app.send_message(user_id, msg)
+
+        else:
+            app.send_message(user_id, f"Você já possui cupom(ns) desse sorteio.\n\nPara receber mais, indique para amigos! Você pode indicar para até 10 amigos\n\nSeu código de indicação:\n**{user_id}**")
 
 def participa(nome, user_id, sorteio): #Verificar se um usuário já particia de um sorteio
     pt = [p[-1] for p in bdMap(3, "select * from cupons where user_cod=%s and sorteio=%s", [user_id, sorteio])]
@@ -273,6 +288,30 @@ def participa(nome, user_id, sorteio): #Verificar se um usuário já particia de
 
     else:
         return True
+
+def limite(indicante, sorteio):
+    ind = bdMap(4, "select * from indicados where indicante=%s and sorteio=%s", [indicante, sorteio])
+
+    #print(ind)
+    #print(len(ind))
+
+    if len(ind) < 10:
+        return False
+    
+    else:
+        return True
+
+def indExists(indicante, indicado, sorteio):
+    ind = bdMap(4, "select * from indicados where indicante=%s and indicado=%s and sorteio=%s", [indicante, indicado, sorteio])
+
+    print(ind)
+
+
+    if len(ind) > 0:
+        return True
+    
+    else:
+        return False
 
 def bdMap(c, sql, var=None,  method="select"): #Interações com banco de dados
     cursors = {
