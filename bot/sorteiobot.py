@@ -91,6 +91,7 @@ def start(bot, mensagem):
     else:
         app.send_message(user_id, "Mensagem de inicio")
     registrar(user_id, fname)
+    helpC(bot, mensagem)
 
 @app.on_message(filters.private & filters.command("help")) #Resposta para o comando help, que consulta a maioria dos comando disponíveis do bot
 def helpC(bot, mensagem):
@@ -280,7 +281,8 @@ def cupom(nome, user_id, sorteio, fname=None, lib=False, ind=False, indicado=Non
             app.send_message(user_id, msg)
 
         else:
-            app.send_message(user_id, f"Você já possui cupom(ns) desse sorteio.\n\nPara receber mais, indique para amigos! Você pode indicar para até 10 amigos\n\nSeu código de indicação:\n**{user_id}**")
+            app.send_message(user_id, f"Você já possui cupom(ns) desse sorteio.\n\nPara receber mais, indique para amigos! Você pode indicar para até 10 amigos\n\nSeu código de indicação:\n```{user_id}```")
+            app.send_message(user_id, f"Seu amigo deve me enviar:\n\n```/indica {user_id} {sorteio}```")    
 
 def participa(nome, user_id, sorteio): #Verificar se um usuário já particia de um sorteio
     pt = [p[-1] for p in bdMap(3, "select * from cupons where user_cod=%s and sorteio=%s", [user_id, sorteio])]
