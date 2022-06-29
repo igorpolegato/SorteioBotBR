@@ -74,9 +74,7 @@ def bd():
         "indicante bigint not null,"
         "n_indicado varchar(30) not null,"
         "indicado bigint not null,"
-        "sorteio varchar(30) not null,"
-        "constraint fk_user_ind foreign key (indicante) references clientes(cod),"
-        "constraint fk_sort_ind foreign key (sorteio) references clientes(cod))"
+        "constraint fk_user_ind foreign key (indicante) references clientes(cod))"
     )
 
 ############## COMANDOS ####################
@@ -122,9 +120,9 @@ def rSorteio(bot, mensagem):
         r = bdMap(2, "insert into sorteios(nome, criador) values(%s, %s)", [sort_name, user_id], "insert")
         if r == "duplicate":
             app.send_message(user_id, f"O sorteio {sort_name} já existe!")
-            print(f"O usuário {fname}({user_id}) registrou o sorteio {sort_name} --> /rSorteio\n")
         else:
             app.send_message(user_id, f"O sorteio {sort_name} foi registrado!")
+            print(f"O usuário {fname}({user_id}) registrou o sorteio {sort_name} --> /rSorteio\n")
 
 
 @app.on_message(filters.private & filters.command("rmsorteio")) #Resposta para o comando rmsorteio, que deleta um sorteio da lista
@@ -199,7 +197,7 @@ def consultarCp(bot, mensagem):
 
     app.send_message(user_id, msg)
 
-    print("O usuário {fname}({user_id}) consultou os cupons --> /cupons\n")
+    print(f"O usuário {fname}({user_id}) consultou os cupons --> /cupons\n")
 
 @app.on_message(filters.private & filters.command("indica")) #Resposta para o comando indica, que registra uma indicação e gera um novo cupom
 def indica(bot, mensagem):
@@ -212,30 +210,40 @@ def indica(bot, mensagem):
     except Exception:
         indicante = False
 
-    if len(text) != 3 or text[0] != "/indica" or not indicante:
-        app.send_message(user_id, "Para registrar um indicante, digite:\n\n /indica <código> <sorteio>", parse_mode=ParseMode.MARKDOWN)
+    if len(text) != 2 or text[0] != "/indica" or not indicante:
+        app.send_message(user_id, "Para registrar um indicante, digite:\n\n /indica <código>", parse_mode=ParseMode.MARKDOWN)
 
     elif indicante == user_id:
-        app.send_message(user_id, "Você não pode usar seu própio código!")
+        app.send_message(user_id, "Você não pode usar seu próprio código!")
 
     else:
         sorteio = text[2]
         if not indExists(indicante, user_id, sorteio):
             try:
-                nome = bdMap(1, "select * from clientes where cod=%s", [indicante])[0][1]
+                nome = bdMap(1, "select * from clientes where cod=%s", [indicante])[0][2]
 
                 bdMap(4, "insert into indicados(indicante, n_indicado, indicado, sorteio) values(%s, %s, %s, %s)", [indicante, fname, user_id, sorteio])
                 cupom(nome, indicante, sorteio, fname=fname, lib=True, ind=True, indicado=user_id)
 
                 app.send_message(user_id, "Obrigado por aceitar a recomendação!")
 
-                print(f"O usuário {fname} registrou {indicante} como indicante do sorteio {sorteio} --> /indica\n")
+                print(f"O usuário {fname} registrou {indicante} como indicante --> /indica\n")
 
             except Exception:
                 app.send_message(user_id, "Código invalido!")
         
         else:
             app.send_message(user_id, "Você já utilizou esse código!")
+
+@app.on_message(filters.command("sortear"))
+def escSortear(bot, mensagem):
+    user_id = mensagem.chat.id
+    st = [[InlineKeyboardButton(str(s[1]), callback_data="sortear_"+str(s[1]))] for s in bdMap(2, "select * from sorteios where criador=%s", [user_id])]
+
+    markup = InlineKeyboardMarkup(st)
+
+    app.send_message(user_id, "Escolha de que sorteio o ganhador será definido", reply_markup=markup)
+
 
 @app.on_message(filters.private & filters.command("enviar")) #Resposta para o comando enviar, que envia a mensagem para todos os usuários cadastrados
 def enviar(bot, mensagem):
@@ -255,6 +263,7 @@ def enviar(bot, mensagem):
 
         for user in users:
             met['text'](user, text)
+            print(f"Mensagem encaminhada para {user}\n")
 
     else:
         text = mensagem.caption.replace("/enviar ", "")
@@ -266,6 +275,7 @@ def enviar(bot, mensagem):
 
         for user in users:
             met[media](user, types[media].file_id, text)
+            print(f"Mensagem encaminhada para {user}\n")
 
 
 ############# UTILS #############
@@ -290,7 +300,7 @@ def cupom(nome, user_id, sorteio, fname=None, lib=False, ind=False, indicado=Non
         num = rd(1, 10000)
 
     if ind:
-        msg = f"Você recebeu um cupom para o sorteio {sorteio} por indicar {fname}!\n\nSeu cupom é {num}"
+        msg = f"Você recebeu um cupom para os sorteios que está participando por indicar {fname}!\n\nSeu cupom é {num}"
 
     else:
         msg = f"Seu cupom é {num} para o sorteio {sorteio}"
@@ -303,7 +313,7 @@ def cupom(nome, user_id, sorteio, fname=None, lib=False, ind=False, indicado=Non
 
         else:
             app.send_message(user_id, f"Você já possui cupom(ns) desse sorteio.\n\nPara receber mais, indique para amigos! Você pode indicar para até 10 amigos\n\nSeu código de indicação:\n```{user_id}```")
-            app.send_message(user_id, f"Seu amigo deve me enviar:\n\n```/indica {user_id} {sorteio}```")    
+            app.send_message(user_id, f"Envie para seu amigo\n\nEstá rolando sorteio no @gsorteiobot!\n\nFaça o seu cadastro e digite meu código de indicação\n\nDigite ```/indica {user_id}``` para participar!")    
 
 def participa(nome, user_id, sorteio): #Verificar se um usuário já particia de um sorteio
     pt = [p[-1] for p in bdMap(3, "select * from cupons where user_cod=%s and sorteio=%s", [user_id, sorteio])]
