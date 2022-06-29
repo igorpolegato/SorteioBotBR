@@ -336,7 +336,10 @@ def ganhador(dono, sorteio): #Define o vencedor do sorteio
     for k, v in parts.items():
         if win in v["cps"]:
             username = app.get_chat(v["uid"]).username
-            app.send_message(user_id, f"O vencedor do sorteio é @{username} com o cupom {win}")
+            dname = app.get_chat(dono).username
+
+            app.send_message(dono, f"O vencedor do sorteio é @{username} com o cupom {win}")
+            app.send_message(v["uid"], f"Parabéns, você venceu o sorteio {sorteio} com o cupom {win}!\n\nEntre em contato com @{dname}.")
             break
 
 def participa(nome, user_id, sorteio): #Verificar se um usuário já particia de um sorteio
@@ -424,7 +427,7 @@ def callWin(bot, call):
 
 @app.on_callback_query(filters.regex("^help_sortear")) #Resposta para botão sortear do help
 def callSotear(bot, call):
-    escSortear(bot, call.menssage)
+    escSortear(bot, call.message)
 
 @app.on_callback_query(filters.regex("^help_sorteios")) #Resposta para botão sorteios do help
 def callSorteios(bot, call):
