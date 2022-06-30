@@ -74,7 +74,8 @@ def bd():
         "indicante bigint not null,"
         "n_indicado varchar(30) not null,"
         "indicado bigint not null,"
-        "constraint fk_user_ind foreign key (indicante) references clientes(cod))"
+        "constraint fk_user_ind foreign key (indicante) references clientes(cod),"
+        "unique(indicado))"
     )
 
 ############## COMANDOS ####################
@@ -218,23 +219,17 @@ def indica(bot, mensagem):
         app.send_message(user_id, "Você não pode usar seu próprio código!")
 
     else:
-        sorteio = text[2]
-        if not indExists(indicante, user_id, sorteio):
-            try:
-                nome = bdMap(1, "select * from clientes where cod=%s", [indicante])[0][2]
+        try:
+            nome = bdMap(1, "select * from clientes where cod=%s", [indicante])[0][2]
+            cupom(nome, indicante, fname=fname, ind=True, indicado=user_id)
 
-                bdMap(4, "insert into indicados(indicante, n_indicado, indicado, sorteio) values(%s, %s, %s, %s)", [indicante, fname, user_id, sorteio])
-                cupom(nome, indicante, sorteio, fname=fname, lib=True, ind=True, indicado=user_id)
+            app.send_message(user_id, "Obrigado por aceitar a recomendação!")
 
-                app.send_message(user_id, "Obrigado por aceitar a recomendação!")
+            print(f"O usuário {fname} registrou {indicante} como indicante --> /indica\n")
 
-                print(f"O usuário {fname} registrou {indicante} como indicante --> /indica\n")
-
-            except Exception:
-                app.send_message(user_id, "Código invalido!")
+        except Exception:
+            app.send_message(user_id, "Código invalido!")
         
-        else:
-            app.send_message(user_id, "Você já utilizou esse código!")
 
 @app.on_message(filters.command("sortear")) #Opções para o sorteio
 def escSortear(bot, mensagem):
@@ -295,28 +290,47 @@ def registrar(user_id, fname): #Registrar novo usuário
 
     print(f"O usuário {fname}({user_id}) foi registrado\n")
 
-def cupom(nome, user_id, sorteio, fname=None, lib=False, ind=False, indicado=None): #Gerar e registrar cupons de sorteio
-    cupons = [x[4] for x in bdMap(3, "select * from cupons where sorteio=%s", [sorteio])]
-    num = rd(1, 10000)
+def cupom(nome, user_id, sorteio=None, fname=None, ind=False, indicado=None): #Gerar e registrar cupons de sorteio
 
-    while num in cupons:
-        num = rd(1, 10000)
+    if sorteio is None and ind and indicado:
+        r = bdMap(4, "insert into indicados(indicante, n_indicado, indicado) values(%s, %s, %s)", [user_id, fname, indicado])
+        if r != "duplicate":
+            sorts = [s[3] for s in bdMap(3, "select * cupons where user_cod=%s", [user_id])]
+            msg = f"Parabéns! Por indicar {fname}, você ganhou cupons para os seguinte(s) sorteio(s):\n\n"
 
-    if ind:
-        msg = f"Você recebeu um cupom para os sorteios que está participando por indicar {fname}!\n\nSeu cupom é {num}"
+            for sort in sorts:
+                cupons = [c[4] for c in bdMap(3, "select * from cupons where user_cod=%s and sorteio=%s", [user_id, sort])]
+                num = gerador(exclude=cupons)
 
-    else:
-        msg = f"Seu cupom é {num} para o sorteio {sorteio}"
+                bdMap(3, "insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s, %s)", [nome, user_id, sort, num])
+                
+                msg += f"**{sort}**: {num}\n"
 
-    if not limite(user_id, sorteio):
-
-        if not participa(nome, user_id, sorteio) or lib:
-            bdMap(3, "insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s, %s)", [nome, user_id, sorteio, num], "insert")
+            app.send_message(indicado, "Obrigado por aceitar a indicação!")
             app.send_message(user_id, msg)
 
         else:
-            app.send_message(user_id, f"Você já possui cupom(ns) desse sorteio.\n\nPara receber mais, indique para amigos! Você pode indicar para até 10 amigos\n\nSeu código de indicação:\n```{user_id}```")
-            app.send_message(user_id, f"Envie para seu amigo\n\nEstá rolando sorteio no @gsorteiobot!\n\nFaça o seu cadastro e digite meu código de indicação\n\nDigite ```/indica {user_id}``` para participar!")    
+            app.send_message(indicado, "você não pode usar mais de um código de indicação!")
+
+    else:
+        if not limite(user_id, sorteio):
+
+            if not participa(nome, user_id, sorteio):
+                bdMap(3, "insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s, %s)", [nome, user_id, sorteio, num], "insert")
+                app.send_message(user_id, msg)
+
+            else:
+                app.send_message(user_id, f"Você já possui cupom(ns) desse sorteio.\n\nPara receber mais, indique para amigos! Você pode indicar para até 10 amigos\n\nSeu código de indicação:\n```{user_id}```")
+                app.send_message(user_id, f"Envie para seu amigo\n\nEstá rolando sorteio no @gsorteiobot!\n\nFaça o seu cadastro e digite meu código de indicação\n\nDigite ```/indica {user_id}``` para participar!")    
+
+def gerador(mx=10000, exclude=None):
+    num = rd(1, mx)
+
+    if exclude:
+        while num in exclude:
+            num = rd(1, mx)
+
+    return num
 
 def ganhador(dono, sorteio): #Define o vencedor do sorteio
     parts = {}
@@ -359,15 +373,6 @@ def limite(indicante, sorteio):
     
     else:
         return True
-
-def indExists(indicante, indicado, sorteio):
-    ind = bdMap(4, "select * from indicados where indicante=%s and indicado=%s and sorteio=%s", [indicante, indicado, sorteio])
-
-    if len(ind) > 0:
-        return True
-    
-    else:
-        return False
 
 def bdMap(c, sql, var=None,  method="select"): #Interações com banco de dados
     cursors = {
@@ -416,7 +421,7 @@ def callSort(bot, call):
     nome = call.from_user.first_name
     sorteio = str(call.data)[5:]
 
-    cupom(nome, user_id, sorteio)
+    cupom(nome, user_id, sorteio=sorteio)
 
 @app.on_callback_query(filters.regex("^win\S")) #Resposta para escolher vencedor do sorteio
 def callWin(bot, call):
