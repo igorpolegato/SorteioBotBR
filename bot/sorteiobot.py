@@ -223,10 +223,6 @@ def indica(bot, mensagem):
             nome = bdMap(1, "select * from clientes where cod=%s", [indicante])[0][2]
             cupom(nome, indicante, fname=fname, ind=True, indicado=user_id)
 
-            app.send_message(user_id, "Obrigado por aceitar a recomendação!")
-
-            print(f"O usuário {fname} registrou {indicante} como indicante --> /indica\n")
-
         except Exception:
             app.send_message(user_id, "Código invalido!")
         
@@ -295,19 +291,33 @@ def cupom(nome, user_id, sorteio=None, fname=None, ind=False, indicado=None): #G
     if sorteio is None and ind and indicado:
         r = bdMap(4, "insert into indicados(indicante, n_indicado, indicado) values(%s, %s, %s)", [user_id, fname, indicado])
         if r != "duplicate":
-            sorts = [s[3] for s in bdMap(3, "select * cupons where user_cod=%s", [user_id])]
-            msg = f"Parabéns! Por indicar {fname}, você ganhou cupons para os seguinte(s) sorteio(s):\n\n"
+            sorts_dor = [s[3] for s in bdMap(3, "select * from cupons where user_cod=%s", [user_id])]
+            sorts_ado = [s[3] for s in bdMap(3, "select * from cupons where user_cod=%s", [indicado])]
 
-            for sort in sorts:
+            msg_dor = f"Parabéns! Por indicar {fname}, você ganhou cupons para os seguinte(s) sorteio(s):\n\n"
+            msg_ado = "Você ganhou cupons para os seguinte(s) sorteio(s):\n\n"
+
+            for sort in sorts_dor:
                 cupons = [c[4] for c in bdMap(3, "select * from cupons where user_cod=%s and sorteio=%s", [user_id, sort])]
                 num = gerador(exclude=cupons)
 
                 bdMap(3, "insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s, %s)", [nome, user_id, sort, num])
                 
-                msg += f"**{sort}**: {num}\n"
+                msg_dor += f"**{sort}**: {num}\n"
 
-            app.send_message(indicado, "Obrigado por aceitar a indicação!")
-            app.send_message(user_id, msg)
+            for sort in sorts_ado:
+                cupons = [c[4] for c in bdMap(3, "select * from cupons where user_cod=%s and sorteio=%s", [indicado, sort])]
+                num = gerador(exclude=cupons)
+
+                bdMap(3, "insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s, %s)", [fname, indicado, sort, num])
+
+                msg_ado += f"**{sort}**: {num}\n"
+                
+
+            app.send_message(indicado, "Obrigado por aceitar a indicação!\n\n"+msg_ado)
+            print(f"O usuário {fname} registrou {user_id} como indicante --> /indica\n")
+
+            app.send_message(user_id, msg_dor)
 
         else:
             app.send_message(indicado, "você não pode usar mais de um código de indicação!")
