@@ -11,7 +11,7 @@ from random import randrange as rd, choice
 import mysql.connector
 import threading
 
-app = Client("Teste",
+app = Client("GSorteio",
             api_id=api_id,
             api_hash=api_hash,
             bot_token=bot_token)
@@ -22,9 +22,11 @@ with app:
 
 lock = threading.Lock()
 
+add_regra = {}
+
 ################## MySQL #################
 def bd():
-    global con, cur1, cur2, cur3, cur4
+    global con, cur1, cur2, cur3, cur4, cur5
 
     con = mysql.connector.connect(
         host=dbhost,
@@ -36,8 +38,9 @@ def bd():
     cur = con.cursor(buffered=True) # cursor para criar tabelas
     cur1 = con.cursor(buffered=True) # cursor para tabela clientes
     cur2 = con.cursor(buffered=True) # cursor para tabela sorteios
-    cur3 = con.cursor(buffered=True) # cursor para a tabela codigos
+    cur3 = con.cursor(buffered=True) # cursor para a tabela cupons
     cur4 = con.cursor(buffered=True) # cursor para a tabela indicados
+    cur5 = con.cursor(buffered=True) # cursor para a tabela regras
 
     cur.execute(
         "create table if not exists clientes ("
@@ -78,6 +81,15 @@ def bd():
         "unique(indicado))"
     )
 
+    cur.execute(
+        "create table if not exists regras ("
+        "id int auto_increment primary key,"
+        "sorteio varchar(30) not null,"
+        "regras varchar(200) not null,"
+        "constraint fk_sort_regras foreign key (sorteio) references sorteios(nome),"
+        "unique(sorteio))"
+    )
+
 ############## COMANDOS ####################
 
 @app.on_message(filters.private & filters.command("start")) #Resposta para o comando start, que é enviado quando um usuário inicia o bot
@@ -98,7 +110,7 @@ def helpC(bot, mensagem):
     btns = [
         [InlineKeyboardButton("Sorteios", callback_data="help_sorteios"), InlineKeyboardButton("Cupons", callback_data="help_cupons")],
         [InlineKeyboardButton("Registrar Sorteio", callback_data="help_regsorteio"), InlineKeyboardButton("Apagar sorteio", callback_data="help_rmsorteio")],
-        [InlineKeyboardButton("Sortear", callback_data="help_sortear")],
+        [InlineKeyboardButton("Sortear", callback_data="help_sortear"), InlineKeyboardButton("Atualizar regras", callback_data="help_atregras")],
         [InlineKeyboardButton("Indicação", callback_data="help_ind")]
 
     ]
@@ -126,7 +138,6 @@ def rSorteio(bot, mensagem):
             app.send_message(user_id, f"O sorteio {sort_name} foi registrado!")
             print(f"O usuário {fname}({user_id}) registrou o sorteio {sort_name} --> /rSorteio\n")
 
-
 @app.on_message(filters.private & filters.command("rmsorteio")) #Resposta para o comando rmsorteio, que deleta um sorteio da lista
 def rmSorteio(bot, mensagem):
     user_id = mensagem.chat.id
@@ -141,6 +152,7 @@ def rmSorteio(bot, mensagem):
         sort_name = sort_name.title()
         criador = bdMap(2, "select * from sorteios where nome=%s", [sort_name])[0][2]
         if criador == user_id:
+            bdMap(5, "delete from regras where sorteio=%s", [sort_name], "delete")
             bdMap(3, "delete from cupons where sorteio=%s", [sort_name], "delete")
             bdMap(2, "delete from sorteios where nome=%s", [sort_name], "delete")
             bdMap(4, "delete from indicados where sorteio=%s", [sort_name], "delete")
@@ -237,6 +249,19 @@ def escSortear(bot, mensagem):
     app.send_message(user_id, "Escolha de que sorteio o ganhador será definido", reply_markup=markup)
 
 
+@app.on_message(filters.private & filters.command("regras"))
+def regras(bot, mensagem):
+    user_id = mensagem.chat.id
+    try:
+        btns = [[InlineKeyboardButton(s[1], callback_data="regras_"+str(s[1]))] for s in bdMap(2, "select * from sorteios where criador=%s", [user_id])]
+        
+        markup = InlineKeyboardMarkup(btns)
+
+        app.send_message(user_id, "Selecione o sorteio para alterar as regras", reply_markup=markup)
+    
+    except Exception:
+        app.send_message(user_id, "Você não possui nenhum sorteio registrado!")
+
 @app.on_message(filters.private & filters.command("enviar")) #Resposta para o comando enviar, que envia a mensagem para todos os usuários cadastrados
 def enviar(bot, mensagem):
     user_id = mensagem.chat.id
@@ -271,7 +296,28 @@ def enviar(bot, mensagem):
 
 @app.on_message(filters.command("teste"))
 def teste(bot, mensagem):
-    ganhador(363030018, "Testebot")
+    print("aqui")
+    sorteio = "Teste"
+    regras = bdMap(5, "select regras from regras where sorteio=%s", [sorteio])
+    print(regras)
+
+@app.on_message(filters.private)
+def rRegras(bot, mensagem):
+    user_id = mensagem.chat.id
+    text = mensagem.text
+
+    if str(user_id) in add_regra.keys():
+        sorteio = add_regra[str(user_id)]
+
+        r = bdMap(5, "insert into regras(sorteio, regras) values(%s, %s)", [sorteio, text])
+        if r == "duplicate":
+            bdMap(5, "delete from regras where sorteio=%s", [sorteio])
+            r()
+
+        ex = add_regra.pop(str(user_id), 404)
+
+        app.send_message(user_id, f"Regras para o sorteio {sorteio} alteradas!")
+
 ############# UTILS #############
 
 def registrar(user_id, fname): #Registrar novo usuário
@@ -326,8 +372,11 @@ def cupom(nome, user_id, sorteio=None, fname=None, ind=False, indicado=None): #G
         if not limite(user_id, sorteio):
 
             if not participa(nome, user_id, sorteio):
+                rg = bdMap(5, "select regras from regras where sorteio=%s", [sorteio])
                 num = gerador()
                 bdMap(3, "insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s, %s)", [nome, user_id, sorteio, num], "insert")
+                if len(rg) != 0:
+                    app.send_message(user_id, "Regras do sorteio: \n\n"+rg[0][0])
                 app.send_message(user_id, f"Seu cupom para o sorteio {sorteio} é {num}")
 
             else:
@@ -390,7 +439,8 @@ def bdMap(c, sql, var=None,  method="select"): #Interações com banco de dados
         1: cur1,
         2: cur2,
         3: cur3,
-        4: cur4
+        4: cur4,
+        5: cur5
     }
 
     lock.acquire(True)
@@ -441,6 +491,14 @@ def callWin(bot, call):
     
     ganhador(user_id, sorteio)
 
+@app.on_callback_query(filters.regex("^regras\S"))
+def callRegras(bot, call):
+    user_id = call.from_user.id
+    sorteio = call.data[7:]
+
+    add_regra[str(user_id)] = sorteio
+    app.send_message(user_id, f"Envie as regras para o sorteio {sorteio}")
+
 @app.on_callback_query(filters.regex("^help_sortear")) #Resposta para botão sortear do help
 def callSotear(bot, call):
     escSortear(bot, call.message)
@@ -460,6 +518,10 @@ def callRegSort(bot, call):
 @app.on_callback_query(filters.regex("^help_rmsorteio")) #Resposta para botão Remover Sorteio do help
 def callRmSort(bot, call):
     rmSorteio(bot, call.message)
+
+@app.on_callback_query(filters.regex("^help_atregras"))
+def callRg(bot, call):
+    rRegras(bot, call.message)
 
 @app.on_callback_query(filters.regex("^help_ind")) #Resposta para botão Indicação do help
 def callInd(bot, call):
