@@ -316,12 +316,13 @@ def cupom(nome, user_id, sorteio=None, fname=None, ind=False, indicado=None): #G
         if not limite(user_id, sorteio):
 
             if not participa(nome, user_id, sorteio):
+                num = gerador()
                 bdMap(3, "insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s, %s)", [nome, user_id, sorteio, num], "insert")
-                app.send_message(user_id, msg)
+                app.send_message(user_id, f"Seu cupom para o sorteio {sorteio} é {num}")
 
             else:
                 app.send_message(user_id, f"Você já possui cupom(ns) desse sorteio.\n\nPara receber mais, indique para amigos! Você pode indicar para até 10 amigos\n\nSeu código de indicação:\n```{user_id}```")
-                app.send_message(user_id, f"Envie para seu amigo\n\nEstá rolando sorteio no @gsorteiobot!\n\nFaça o seu cadastro e digite meu código de indicação\n\nDigite ```/indica {user_id}``` para participar!")    
+                app.send_message(user_id, f"Está rolando sorteio no @gsorteiobot!\n\nFaça o seu cadastro e digite meu código de indicação\n\nDigite ```/indica {user_id}``` para participar!")    
 
 def gerador(mx=10000, exclude=None):
     num = rd(1, mx)
@@ -366,7 +367,7 @@ def participa(nome, user_id, sorteio): #Verificar se um usuário já particia de
         return True
 
 def limite(indicante, sorteio):
-    ind = bdMap(4, "select * from indicados where indicante=%s and sorteio=%s", [indicante, sorteio])
+    ind = bdMap(4, "select * from cupons where user_cod=%s and sorteio=%s", [indicante, sorteio])
 
     if len(ind) < 10:
         return False
