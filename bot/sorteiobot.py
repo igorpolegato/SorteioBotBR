@@ -126,10 +126,10 @@ def rSorteio(bot, mensagem):
     fname = mensagem.chat.first_name
     txt = mensagem.text.split()
 
-    if len(txt) != 2:
+    if len(txt) < 2 or txt[0] != "/rsorteio":
         app.send_message(user_id, "Para registrar novo sorteio, envie:\n\n/rsorteio <nome>", parse_mode=ParseMode.MARKDOWN)
     else:
-        sort_name = txt[1].lower()
+        sort_name = " ".join(txt[1:].lower())
         sort_name = sort_name.title()
         r = bdMap(2, "insert into sorteios(nome, criador) values(%s, %s)", [sort_name, user_id], "insert")
         if r == "duplicate":
@@ -296,7 +296,6 @@ def enviar(bot, mensagem):
 
 @app.on_message(filters.command("teste"))
 def teste(bot, mensagem):
-    print("aqui")
     sorteio = "Teste"
     regras = bdMap(5, "select regras from regras where sorteio=%s", [sorteio])
     print(regras)
@@ -521,11 +520,27 @@ def callRmSort(bot, call):
 
 @app.on_callback_query(filters.regex("^help_atregras"))
 def callRg(bot, call):
-    rRegras(bot, call.message)
+    regras(bot, call.message)
 
 @app.on_callback_query(filters.regex("^help_ind")) #Resposta para botão Indicação do help
 def callInd(bot, call):
+    user_id = call.from_user.id
+    btns = [
+        [InlineKeyboardButton("Registrar indicação", callback_data="frescind_rgcodigo")],
+        [InlineKeyboardButton("Meu código", callback_data="frescind_mycodigo")],
+        ]
+
+    markup = InlineKeyboardMarkup(btns)
+    app.send_message(user_id, "Escolha uma opção", reply_markup=markup)
+
+@app.on_callback_query(filters.regex("^frescind_rgcodigo"))
+def callRgcodigo(bot, call):
     indica(bot, call.message)
+
+@app.on_callback_query(filters.regex("^frescind_mycodigo"))
+def callMycodigo(bot, call):
+    user_id = call.from_user.id
+    app.send_message(user_id, f"Está rolando sorteio no @gsorteiobot!\n\nFaça o seu cadastro e digite meu código de indicação\n\nDigite ```/indica {user_id}``` para participar!")
 
 if __name__ == "__main__":
     bd()
