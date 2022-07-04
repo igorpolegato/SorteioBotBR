@@ -23,6 +23,7 @@ with app:
 lock = threading.Lock()
 
 add_regra = {}
+add_sorteio = {}
 
 ################## MySQL #################
 def bd():
@@ -56,7 +57,7 @@ def bd():
         "id int auto_increment primary key,"
         "nome varchar(30) not null,"
         "criador bigint not null,"
-        "unique(nome))"
+        "ganhadores int not null default 1)"
     )
 
     cur.execute(
@@ -64,11 +65,11 @@ def bd():
         "id int auto_increment primary key,"
         "nome varchar(30) not null,"
         "user_cod bigint not null,"
-        "sorteio varchar(30) not null,"
+        "sorteio int not null,"
         "cupom bigint not null,"
         "constraint fk_nome foreign key (nome) references clientes(nome),"
         "constraint fk_user foreign key (user_cod) references clientes(cod),"
-        "constraint fk_sorteio foreign key (sorteio) references sorteios(nome))"
+        "constraint fk_sorteio foreign key (sorteio) references sorteios(id))"
     )
     
     cur.execute(
@@ -84,10 +85,9 @@ def bd():
     cur.execute(
         "create table if not exists regras ("
         "id int auto_increment primary key,"
-        "sorteio varchar(30) not null,"
+        "sorteio int not null,"
         "regras varchar(200) not null,"
-        "constraint fk_sort_regras foreign key (sorteio) references sorteios(nome),"
-        "unique(sorteio))"
+        "constraint fk_sort_regras foreign key (sorteio) references sorteios(id))"
     )
 
 ############## COMANDOS ####################
@@ -131,12 +131,10 @@ def rSorteio(bot, mensagem):
     else:
         sort_name = " ".join(txt[1:]).lower()
         sort_name = sort_name.title()
-        r = bdMap(2, "insert into sorteios(nome, criador) values(%s, %s)", [sort_name, user_id], "insert")
-        if r == "duplicate":
-            app.send_message(user_id, f"O sorteio {sort_name} já existe!")
-        else:
-            app.send_message(user_id, f"O sorteio {sort_name} foi registrado!")
-            print(f"O usuário {fname}({user_id}) registrou o sorteio {sort_name} --> /rSorteio\n")
+
+        if sort_name not in add_sorteio.keys():
+            add_sorteio[user_id] = sort_name
+            app.send_message(user_id, "Envie a quantidade de ganhadores do sorteio")
 
 @app.on_message(filters.private & filters.command("rmsorteio")) #Resposta para o comando rmsorteio, que deleta um sorteio da lista
 def rmSorteio(bot, mensagem):
@@ -144,37 +142,16 @@ def rmSorteio(bot, mensagem):
     fname = mensagem.chat.first_name
     txt = mensagem.text.split()
 
-    sorts = bdMap(2, "select nome from sorteios where criador=%s", [user_id])
+    sorts = bdMap(2, "select * from sorteios where criador=%s", [user_id])
 
     if len(sorts) > 0:
-        btns = [[InlineKeyboardButton(s[0], callback_data="rmsort_"+s[0])] for s in sorts]
+        btns = [[InlineKeyboardButton(f"{int(s[0]) + 150} - {s[1]}", callback_data=f"rmsort_{int(s[0]) + 150}_{s[1]}")] for s in sorts]
         markup = InlineKeyboardMarkup(btns)
 
         app.send_message(user_id, "Esses são os sorteios que você possui cadastrado.\n\nClique no sorteio que deseja excluir", reply_markup=markup)        
 
     else:
         app.send_message(user_id, "Você não possui nenhum sorteio cadastrado!")
-        
-
-    # if len(txt) != 2 or txt[0] != "/rmsorteio":
-    #     app.send_message(user_id, "Para apagar um sorteio, envie:\n\n/rmsorteio <nome>", parse_mode=ParseMode.MARKDOWN)
-    
-    # else:
-    #     sort_name = txt[1].lower()
-    #     sort_name = sort_name.title()
-    #     criador = bdMap(2, "select * from sorteios where nome=%s", [sort_name])[0][2]
-    #     if criador == user_id:
-    #         bdMap(5, "delete from regras where sorteio=%s", [sort_name], "delete")
-    #         bdMap(3, "delete from cupons where sorteio=%s", [sort_name], "delete")
-    #         bdMap(2, "delete from sorteios where nome=%s", [sort_name], "delete")
-    #         bdMap(4, "delete from indicados where sorteio=%s", [sort_name], "delete")
-
-    #         app.send_message(user_id, f"O sorteio {sort_name} foi removido!")
-
-    #         print(f"O usuário {fname}({user_id}) removeu o sorteio {sort_name} --> /rmSorteio\n")
-        
-    #     else:
-    #         app.send_message(user_id, "Você não tem permissão para excluir esse sorteio!")
 
 @app.on_message(filters.private & filters.command("sorteios")) #Resposta para o comando sorteios, que consulta todos os sorteios disponíveis
 def sorteios(bot, mensagem):
@@ -185,7 +162,7 @@ def sorteios(bot, mensagem):
 
     if len(sorts) > 0:
         for sort in sorts:
-            btns.append([InlineKeyboardButton(sort[1], callback_data=f"sort_{sort[1]}")])
+            btns.append([InlineKeyboardButton(f"{sort[0] + 150} - {sort[1]}", callback_data=f"sort_{int(sort[0]) + 150}_{sort[1]}")])
         
         markup = InlineKeyboardMarkup(btns)
 
@@ -204,7 +181,8 @@ def consultarCp(bot, mensagem):
     cps = {}
 
     for dado in todos:
-        sorteio = dado[3]
+        sorteio = str(dado[3] + 150)
+        sorteio += f" - {bdMap(2, 'select nome from sorteios where id=%s', [int(sorteio) - 150])[0][0]}"
         cp = dado[4]
 
         if sorteio not in cps.keys():
@@ -257,7 +235,7 @@ def escSortear(bot, mensagem):
     sorts = bdMap(2, "select * from sorteios where criador=%s", [user_id])
 
     if len(sorts) > 0:
-        st = [[InlineKeyboardButton(str(s[1]), callback_data="win_"+str(s[1]))] for s in sorts]
+        st = [[InlineKeyboardButton(f"{int(s[0] + 150)} - {s[1]}", callback_data=f"win_{int(s[0]) + 150}_{s[1]}")] for s in sorts]
 
         markup = InlineKeyboardMarkup(st)
 
@@ -314,7 +292,6 @@ def enviar(bot, mensagem):
 
             if mensagem.caption is not None:
                 text = mensagem.caption.replace("/enviar ", "")
-                print(text)
 
                 for user in users:
                     met[media](user, types[media].file_id, caption=text)
@@ -330,13 +307,13 @@ def enviar(bot, mensagem):
 def teste(bot, mensagem):
     sorteio = "Teste"
     regras = bdMap(5, "select regras from regras where sorteio=%s", [sorteio])
-    print(regras)
 
 @app.on_message(filters.private)
 def rRegras(bot, mensagem):
     user_id = mensagem.chat.id
     text = mensagem.text
 
+    ##################### Adicionar regra #####################
     if str(user_id) in add_regra.keys():
         sorteio = add_regra[str(user_id)]
 
@@ -348,6 +325,21 @@ def rRegras(bot, mensagem):
         ex = add_regra.pop(str(user_id), 404)
 
         app.send_message(user_id, f"Regras para o sorteio {sorteio} alteradas!")
+
+
+    ################# Adicionar sorteio ########################
+    elif user_id in add_sorteio.keys():
+        sorteio = add_sorteio[user_id]
+
+        if len(text.split()) == 1:
+            
+            bdMap(2, "insert into sorteios(nome, criador, ganhadores) values(%s, %s, %s)", [sorteio, user_id, int(text)])
+            app.send_message(user_id, f"O sorteio {sorteio} foi cadastrado, com {text} {'ganhador' if int(text) == 1 else 'ganhadores'}")
+
+            add_sorteio.pop(user_id, 404)
+        
+        else:
+            app.send_message(user_id, "Número invalido, envie o número de ganhadores do sorteio")
 
 ############# UTILS #############
 
@@ -400,15 +392,15 @@ def cupom(nome, user_id, sorteio=None, fname=None, ind=False, indicado=None): #G
             app.send_message(indicado, "você não pode usar mais de um código de indicação!")
 
     else:
-        if not limite(user_id, sorteio):
+        if not limite(user_id, int(sorteio[:3]) - 150):
 
             rg = bdMap(5, "select regras from regras where sorteio=%s", [sorteio])
-            if not participa(nome, user_id, sorteio):
+            if not participa(nome, user_id, int(sorteio[:3]) - 150):
                 num = gerador()
-                bdMap(3, "insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s, %s)", [nome, user_id, sorteio, num], "insert")
+                bdMap(3, "insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s, %s)", [nome, user_id, int(sorteio[:3]) - 150, num], "insert")
                 if len(rg) != 0:
                     app.send_message(user_id, "Regras do sorteio: \n\n"+rg[0][0])
-                app.send_message(user_id, f"Seu cupom para o sorteio {sorteio} é {num}")
+                app.send_message(user_id, f"Seu cupom para o sorteio {sorteio[4:]} é {num}")
 
             else:
                 if len(rg) != 0:
@@ -427,11 +419,17 @@ def gerador(mx=10000, exclude=None):
 
 def ganhador(dono, sorteio): #Define o vencedor do sorteio
     parts = {}
-    todos = bdMap(3, "select * from cupons where sorteio=%s", [sorteio])
-    nums = [n[4] for n in bdMap(3, "select * from cupons where sorteio=%s", [sorteio])]
+    wins = []
+    todos = bdMap(3, "select * from cupons where sorteio=%s", [sorteio[0]])
+    loop = bdMap(2, "select ganhadores from sorteios where id=%s", [sorteio[0]])[0][0]
+    nums = [n[4] for n in bdMap(3, "select * from cupons where sorteio=%s", [sorteio[0]])]
 
     if len(nums) > 0:
-        win = choice(nums)
+        for n in range(loop):
+            ns = choice(nums)
+            wins.append(ns)
+            nums.append(ns)
+            
 
         for part in todos:
             cp_id, nome, user_id, sort, cp = part
@@ -442,14 +440,20 @@ def ganhador(dono, sorteio): #Define o vencedor do sorteio
             if cp not in parts[nome]["cps"]:
                 parts[nome]["cps"].append(cp)
 
+        msgd = f"{'O vencedor' if len(wins) == 1 else 'os vencedores'} do sorteio {'é:' if len(wins) == 1 else 'são:'}\n\n"
         for k, v in parts.items():
-            if win in v["cps"]:
-                username = app.get_chat(v["uid"]).username
-                dname = app.get_chat(dono).username
+            for win in wins:
+                if win in v["cps"]:
+                    username = app.get_chat(v["uid"]).username
+                    dname = app.get_chat(dono).username
+                    msgd += f"**@{username} com o cupom {win}**\n"
 
-                app.send_message(dono, f"O vencedor do sorteio é @{username} com o cupom {win}")
-                app.send_message(v["uid"], f"Parabéns, você venceu o sorteio {sorteio} com o cupom {win}!\n\nEntre em contato com @{dname}.")
-                break
+                    app.send_message(v["uid"], f"Parabéns, você venceu o sorteio {sorteio[0] + 150} - {sorteio[1]} com o cupom {win}!\n\nEntre em contato com @{dname}.")
+                else:
+                    app.send_message(v["uid"], f"O sorteio {sorteio[0] + 150} - {sorteio[1]} foi finalizado, infelizmente seu cupom não foi sorteado")
+            app.send_message(dono, msgd, parse_mode=ParseMode.MARKDOWN)
+        
+        deleteSort(dono, dname, sorteio[0])
     
     else:
         app.send_message(dono, "Infelizmente esse sorteio não possui nenhum participante")
@@ -457,8 +461,7 @@ def ganhador(dono, sorteio): #Define o vencedor do sorteio
 def deleteSort(user_id, fname, sorteio):
     bdMap(5, "delete from regras where sorteio=%s", [sorteio], "delete")
     bdMap(3, "delete from cupons where sorteio=%s", [sorteio], "delete")
-    bdMap(2, "delete from sorteios where nome=%s", [sorteio], "delete")
-    bdMap(4, "delete from indicados where sorteio=%s", [sorteio], "delete")
+    bdMap(2, "delete from sorteios where id=%s", [sorteio], "delete")
 
     app.send_message(user_id, f"O sorteio {sorteio} foi removido!")
 
@@ -529,21 +532,21 @@ def log(texto):
 def callSort(bot, call):
     user_id = call.from_user.id
     nome = call.from_user.first_name
-    sorteio = str(call.data)[5:]
+    sorteio = call.data[5:]
 
     cupom(nome, user_id, sorteio=sorteio)
 
 @app.on_callback_query(filters.regex("^win\S")) #Resposta para escolher vencedor do sorteio
 def callWin(bot, call):
-    sorteio = call.data[4:]
+    sorteio = [int(call.data[4:7]) - 150, call.data[8:]]
     user_id = call.from_user.id
-    
+
     ganhador(user_id, sorteio)
 
 @app.on_callback_query(filters.regex("^regras\S"))
 def callRegras(bot, call):
     user_id = call.from_user.id
-    sorteio = call.data[7:]
+    sorteio = int(call.data[7:10]) - 150
 
     add_regra[str(user_id)] = sorteio
     app.send_message(user_id, f"Envie as regras para o sorteio {sorteio}")
@@ -552,7 +555,7 @@ def callRegras(bot, call):
 def callDelete(bot, call):
     user_id = call.from_user.id
     fname = call.from_user.first_name
-    sorteio = call.data[7:]
+    sorteio = int(call.data[7:10]) - 150
     
     deleteSort(user_id, fname, sorteio)
 
