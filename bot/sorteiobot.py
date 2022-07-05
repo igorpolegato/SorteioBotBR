@@ -94,7 +94,6 @@ def bd():
 
 @app.on_message(filters.private & filters.command("start")) #Resposta para o comando start, que é enviado quando um usuário inicia o bot
 def start(bot, mensagem):
-    m_id = mensagem.id
     user_id = mensagem.chat.id
     fname = str(mensagem.chat.first_name)
 
@@ -123,7 +122,6 @@ def helpC(bot, mensagem):
 @app.on_message(filters.private & filters.command("rsorteio")) #Respota para o comando rsorteio, que registra um novo sorteio
 def rSorteio(bot, mensagem):
     user_id = mensagem.chat.id
-    fname = mensagem.chat.first_name
     txt = mensagem.text.split()
 
     if len(txt) < 2 or txt[0] != "/rsorteio":
@@ -139,8 +137,6 @@ def rSorteio(bot, mensagem):
 @app.on_message(filters.private & filters.command("rmsorteio")) #Resposta para o comando rmsorteio, que deleta um sorteio da lista
 def rmSorteio(bot, mensagem):
     user_id = mensagem.chat.id
-    fname = mensagem.chat.first_name
-    txt = mensagem.text.split()
 
     sorts = bdMap(2, "select * from sorteios where criador=%s", [user_id])
 
@@ -305,8 +301,7 @@ def enviar(bot, mensagem):
 
 @app.on_message(filters.command("teste"))
 def teste(bot, mensagem):
-    sorteio = "Teste"
-    regras = bdMap(5, "select regras from regras where sorteio=%s", [sorteio])
+    pass
 
 @app.on_message(filters.private)
 def rRegras(bot, mensagem):
@@ -322,7 +317,7 @@ def rRegras(bot, mensagem):
             bdMap(5, "delete from regras where sorteio=%s", [sorteio[0]])
             r()
 
-        ex = add_regra.pop(str(user_id), 404)
+        add_regra.pop(str(user_id), 404)
 
         app.send_message(user_id, f"Regras para o sorteio {sorteio[1]} alteradas!")
 
@@ -350,10 +345,10 @@ def registrar(user_id, fname): #Registrar novo usuário
             app.send_message(user_id, "Usuário já cadastrado!")
         else:
             app.send_message(user_id, "Usuário cadastrado!")
+            print(f"O usuário {fname}({user_id}) foi registrado\n")
     except Exception as errorrg:
         print(errorrg)
 
-    print(f"O usuário {fname}({user_id}) foi registrado\n")
 
 def cupom(nome, user_id, sorteio=None, fname=None, ind=False, indicado=None): #Gerar e registrar cupons de sorteio
 
@@ -393,20 +388,23 @@ def cupom(nome, user_id, sorteio=None, fname=None, ind=False, indicado=None): #G
 
     else:
         if not limite(user_id, int(sorteio[:3]) - 150):
+            ds = bdMap(2, "select criador from sorteios where id=%s", [int(sorteio[:3]) - 150])[0][0]
+            if user_id != ds:
+                rg = bdMap(5, "select regras from regras where sorteio=%s", [int(sorteio[:3]) - 150])
+                if not participa(nome, user_id, int(sorteio[:3]) - 150):
+                    num = gerador()
+                    bdMap(3, "insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s, %s)", [nome, user_id, int(sorteio[:3]) - 150, num], "insert")
+                    if len(rg) != 0:
+                        app.send_message(user_id, "Regras do sorteio: \n\n"+rg[0][0])
+                    app.send_message(user_id, f"Seu cupom para o sorteio {sorteio[4:]} é {num}")
 
-            rg = bdMap(5, "select regras from regras where sorteio=%s", [int(sorteio[:3]) - 150])
-            if not participa(nome, user_id, int(sorteio[:3]) - 150):
-                num = gerador()
-                bdMap(3, "insert into cupons(nome, user_cod, sorteio, cupom) values(%s, %s, %s, %s)", [nome, user_id, int(sorteio[:3]) - 150, num], "insert")
-                if len(rg) != 0:
-                    app.send_message(user_id, "Regras do sorteio: \n\n"+rg[0][0])
-                app.send_message(user_id, f"Seu cupom para o sorteio {sorteio[4:]} é {num}")
-
+                else:
+                    if len(rg) != 0:
+                        app.send_message(user_id, "Regras do sorteio: \n\n"+rg[0][0])
+                    app.send_message(user_id, f"Você já possui cupom(ns) desse sorteio.\n\nPara receber mais, indique para amigos! Você pode indicar para até 10 amigos\n\nSeu código de indicação:\n```{user_id}```")
+                    app.send_message(user_id, f"Está rolando sorteio no @gsorteiobot!\n\nFaça o seu cadastro e digite meu código de indicação\n\nDigite ```/indica {user_id}``` para participar!")    
             else:
-                if len(rg) != 0:
-                    app.send_message(user_id, "Regras do sorteio: \n\n"+rg[0][0])
-                app.send_message(user_id, f"Você já possui cupom(ns) desse sorteio.\n\nPara receber mais, indique para amigos! Você pode indicar para até 10 amigos\n\nSeu código de indicação:\n```{user_id}```")
-                app.send_message(user_id, f"Está rolando sorteio no @gsorteiobot!\n\nFaça o seu cadastro e digite meu código de indicação\n\nDigite ```/indica {user_id}``` para participar!")    
+                app.send_message(user_id, "Você não pode participar do próprio sorteio!")
 
 def gerador(mx=10000, exclude=None):
     num = rd(1, mx)
