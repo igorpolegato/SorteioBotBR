@@ -1,0 +1,10 @@
+*pyc*
+.pylintrc
+*.session*
+*dist
+*build
+*.spec
+*.bat
+log*
+*.ini
+.vscode
